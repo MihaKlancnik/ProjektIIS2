@@ -1,0 +1,48 @@
+name: Fetch Crypto Prices on Schedule
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 * * * *" # Runs every hour
+
+jobs:
+  fetch_crypto:
+    name: Fetch and Pre-process Crypto Data
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          fetch-depth: 0
+
+      - name: Install Poetry
+        run: |
+          pipx install poetry
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11.2"
+          cache: poetry
+
+      - name: Install dependencies
+        run: |
+          poetry install --no-interaction --no-root
+
+      - name: Run fetch script
+        run: |
+          poetry run python src/data/fetch_save.py
+
+      - name: Commit data changes
+        run: |
+          git add data
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+          git commit -m "Updated crypto prices on $(date) with GitHub Actions" || echo "No changes to commit"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.PAT_TOKEN }}
