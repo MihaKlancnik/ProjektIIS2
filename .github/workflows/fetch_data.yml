@@ -21,6 +21,9 @@ jobs:
         run: |
           pipx install poetry
 
+      - name: Setup DVC
+        uses: iterative/setup-dvc@v1
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
@@ -31,16 +34,24 @@ jobs:
         run: |
           poetry install --no-interaction --no-root
 
+      - name: DVC pull data
+        run: |
+          dvc remote modify origin --local access_key_id ${{ secrets.DAGSHUB_ACCESS_KEY_ID }}
+          dvc remote modify origin --local secret_access_key ${{ secrets.DAGSHUB_SECRET_ACCESS_KEY }}
+          dvc pull
+
       - name: Run fetch script
         run: |
           poetry run python src/data/fetch_save.py
 
       - name: Commit data changes
         run: |
-          git add data
+          dvc add data
+          dvc push
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
-          git commit -m "Updated crypto prices on $(date) with GitHub Actions" || echo "No changes to commit"
+          git add data.dvc
+          git commit -m "Updated price data on `date` with GitHub Actions"
 
       - name: Push changes
         uses: ad-m/github-push-action@master
