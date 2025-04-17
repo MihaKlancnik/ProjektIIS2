@@ -1,0 +1,25 @@
+schema: '2.0'
+stages:
+  fetch_and_preprocess:
+    cmd: "poetry run python src/data/fetch_save.py git commit -am \"Updated crypto
+      data on `date` with DVC pipeline and GitHub workflows\" 2>$null git push 2>$null
+      dvc push 2>$null\n"
+    deps:
+    - path: src/data/fetch_save.py
+      hash: md5
+      md5: ca882c4873dbba49e64e704945b3a5d0
+      size: 1621
+    params:
+      params.yaml:
+        fetch.url: 
+          https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd
+    outs:
+    - path: data/preprocessed/price
+      hash: md5
+      md5: 1bd689172f4dd2d2d82684d7a1e96ba2.dir
+      size: 8664
+      nfiles: 3
+    - path: data/raw/crypto_prices.json
+      hash: md5
+      md5: 1502c20d19d98418d1c29991ba3c279f
+      size: 150
