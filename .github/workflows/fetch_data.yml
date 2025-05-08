@@ -1,4 +1,4 @@
-name: Fetch Crypto Prices on Schedule
+name: Fetch Crypto Data on Schedule
 
 on:
   workflow_dispatch:
@@ -6,8 +6,8 @@ on:
     - cron: "0 * * * *" # Runs every hour
 
 jobs:
-  fetch_crypto:
-    name: Fetch and Pre-process Crypto Data
+  fetch_data:
+    name: Fetch and Pre-process Crypto & Fear/Greed Data
     runs-on: ubuntu-latest
 
     steps:
@@ -42,9 +42,13 @@ jobs:
           dvc remote modify origin --local secret_access_key ${{ secrets.DAGSHUB_SECRET_ACCESS_KEY }}
           dvc pull
 
-      - name: Run fetch script
+      - name: Run fetch crypto script
         run: |
           poetry run python src/data/fetch_save.py
+
+      - name: Run fetch fear and greed script
+        run: |
+          poetry run python src/data/fetch_fear_greed.py
 
       - name: Commit pipeline changes
         run: |
