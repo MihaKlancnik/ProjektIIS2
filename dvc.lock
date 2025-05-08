@@ -23,3 +23,44 @@ stages:
       hash: md5
       md5: b41ce91c2a20c1692afd25d93c99076c
       size: 150
+  fetch_crypto_data:
+    cmd: "poetry run python src/data/fetch_save.py git commit -am \"Updated crypto
+      data on `date` with DVC pipeline and GitHub workflows\" 2>$null git push 2>$null
+      dvc push 2>$null\n"
+    deps:
+    - path: src/data/fetch_save.py
+      hash: md5
+      md5: 0cd8ab9acada3c74f25ef4a89a091d45
+      size: 1623
+    params:
+      params.yaml:
+        fetch.url: 
+          https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd
+    outs:
+    - path: data/preprocessed/price
+      hash: md5
+      md5: 13b1492c9cbba9392d242d6955600f3f.dir
+      size: 9444
+      nfiles: 4
+    - path: data/raw/crypto_prices.json
+      hash: md5
+      md5: 532984255e539ed1e19f3b437c8b50c1
+      size: 150
+  fetch_fear_greed_data:
+    cmd: "poetry run python src/data/fetch_fear_greed.py git commit -am \"Updated
+      fear and greed data on `date` with DVC pipeline and GitHub workflows\" 2>$null
+      git push 2>$null dvc push 2>$null\n"
+    deps:
+    - path: src/data/fetch_fear_greed.py
+      hash: md5
+      md5: 4c9f51b685d87e4b8b3b3a81c5ed9f3f
+      size: 3641
+    outs:
+    - path: data/preprocessed/fear_greed_index.csv
+      hash: md5
+      md5: 28bdc3c5773ee10a7339b1b0923e3664
+      size: 276
+    - path: data/raw/fear_greed_raw.csv
+      hash: md5
+      md5: 23e1eb5779d9745374e2c91a65b61419
+      size: 341
