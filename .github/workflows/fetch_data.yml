@@ -17,14 +17,12 @@ jobs:
           token: ${{ secrets.PAT_TOKEN }}
           fetch-depth: 0
 
-      # ... (Steps for setting up Python, Poetry, DVC) ...
-
       - name: Install Poetry
         run: |
-          pipx install poetry # Or use pip install poetry
+          pipx install poetry
 
       - name: Setup DVC
-        uses: iterative/setup-dvc@v1 # Or v2
+        uses: iterative/setup-dvc@v1
         with:
           version: "3.45.0"
 
@@ -38,44 +36,29 @@ jobs:
         run: |
           poetry install --no-interaction --no-root
 
-      - name: DVC Authenticate
+      - name: DVC pull data
         run: |
           dvc remote modify origin --local access_key_id ${{ secrets.DAGSHUB_ACCESS_KEY_ID }}
           dvc remote modify origin --local secret_access_key ${{ secrets.DAGSHUB_SECRET_ACCESS_KEY }}
+          dvc pull
 
-      # --- Keep manual reports cleanup ---
-      - name: Clean reports directory
-        run: rm -rf reports/
-      # -----------------------------------
-
-      # --- DVC PULL FIRST to populate cache ---
-      - name: DVC Pull data and cache
-        run: dvc pull
-      # ----------------------------------------
-
-      # --- THEN DVC CHECKOUT to populate workspace from cache ---
-      - name: DVC Checkout (Populate workspace)
-        run: dvc checkout # This should now find data in the local cache
-      # --------------------------------------------------------
-
-      # --- Run DVC Pipeline (which includes your test_data stage) ---
-      - name: Run DVC Pipeline
-        run: dvc repro
-      # ------------------------------------------------------------
-
-      # ... (Steps for DVC push, Git commit, and Git push) ...
-
-      - name: DVC Push data cache
-        run: dvc push
-
-      - name: Commit dvc.lock changes
+      - name: Run fetch crypto script
         run: |
+          poetry run python src/data/fetch_save.py
+
+      - name: Run fetch fear and greed script
+        run: |
+          poetry run python src/data/fetch_fear_greed.py
+
+      - name: Commit pipeline changes
+        run: |
+          dvc push
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
           git add dvc.lock
-          git diff-index --quiet HEAD || git commit -m "Updated dvc.lock by GitHub Actions"
+          git commit -m "Updated dvc.lock on `date` with GitHub Actions" || true
 
-      - name: Push Git changes
+      - name: Push changes
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.PAT_TOKEN }}
