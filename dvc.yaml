@@ -1,34 +1,34 @@
 stages:
-  fetch_crypto_data:
-    cmd: poetry run python src/data/fetch_save.py # Remove git/dvc push here
-    deps:
-      - src/data/fetch_save.py
-    params:
-      - fetch.url
-    outs:
-      - data/raw/crypto_prices.json
-      - data/preprocessed/price:
-          persist: true
-    always_changed: true
+  fetch_crypto_data:
+    cmd: poetry run python src/data/fetch_save.py # Remove git/dvc push here
+    deps:
+      - src/data/fetch_save.py
+    params:
+      - fetch.url
+    outs:
+      - data/raw/crypto_prices.json
+      - data/preprocessed/price:
+          persist: true
+    always_changed: true
 
-  fetch_fear_greed_data:
-    cmd: poetry run python src/data/fetch_fear_greed.py # Remove git/dvc push here
-    deps:
-      - src/data/fetch_fear_greed.py
-    outs:
-      - data/raw/fear_greed_raw.csv
-      - data/preprocessed/fear_greed_index.csv:
-          persist: true
-    always_changed: true
+  fetch_fear_greed_data:
+    cmd: poetry run python src/data/fetch_fear_greed.py # Remove git/dvc push here
+    deps:
+      - src/data/fetch_fear_greed.py
+    outs:
+      - data/raw/fear_greed_raw.csv
+      - data/preprocessed/fear_greed_index.csv:
+          persist: true
+    always_changed: true
 
-  test_data:
-    cmd: |
-      poetry run python src/data/test_data.py
-      exit 0 # Keep this if you want the stage to 'succeed' even if tests fail internally
-    deps:
-      - src/data/test_data.py
-      - data/preprocessed/price/
-    outs:
-      - data/reference/price:
-          persist: true
-      - reports/
+  test_data:
+    cmd: |
+      poetry run python src/data/test_data.py
+      exit 0 # Keep this if you want the stage to 'succeed' even if tests fail internally
+    deps:
+      - src/data/test_data.py
+      - data/preprocessed/price/
+    outs:
+      - data/reference/price:
+          persist: true
+      - reports/
