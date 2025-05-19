@@ -28,3 +28,15 @@ stages:
       - data/preprocessed/fear_greed_index.csv:
           persist: true
     always_changed: true
+  test_crypto_data:
+    cmd: >
+      poetry run python src/data/test_data.py
+    deps:
+      - src/data/test_data.py
+      - data/preprocessed/price/bitcoin.csv
+      - data/preprocessed/price/ethereum.csv
+      - data/preprocessed/price/solana.csv
+    outs:
+      - reports/bitcoin_data_testing_report.html
+      - reports/ethereum_data_testing_report.html
+      - reports/solana_data_testing_report.html
