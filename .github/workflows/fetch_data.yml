@@ -17,12 +17,14 @@ jobs:
           token: ${{ secrets.PAT_TOKEN }}
           fetch-depth: 0
 
+      # ... (Steps for setting up Python, Poetry, DVC) ...
+
       - name: Install Poetry
         run: |
-          pipx install poetry # Or use pip install poetry depending on preference
+          pipx install poetry
 
       - name: Setup DVC
-        uses: iterative/setup-dvc@v1 # Or v2 if available and preferred
+        uses: iterative/setup-dvc@v1 # Or v2
         with:
           version: "3.45.0"
 
@@ -36,43 +38,40 @@ jobs:
         run: |
           poetry install --no-interaction --no-root
 
-      - name: DVC Authenticate # Renamed for clarity
+      - name: DVC Authenticate
         run: |
           dvc remote modify origin --local access_key_id ${{ secrets.DAGSHUB_ACCESS_KEY_ID }}
           dvc remote modify origin --local secret_access_key ${{ secrets.DAGSHUB_SECRET_ACCESS_KEY }}
 
-      # --- ADD THIS STEP TO CLEAN WORKSPACE ---
-      - name: DVC Checkout (Clean workspace)
-        run: dvc checkout
-      # ---------------------------------------
+      # --- ADD THIS MANUAL CLEANUP STEP ---
+      - name: Clean reports directory
+        run: rm -rf reports/
+      # ------------------------------------
 
-      - name: DVC Pull data and cache # This should now work without report conflicts
+      - name: DVC Checkout (Clean workspace) # This should now pass cleanly for reports/
+        run: dvc checkout
+
+      - name: DVC Pull data and cache # This should also pass now
         run: dvc pull
 
-      # --- REPLACE MANUAL SCRIPT CALLS WITH DVC REPRO ---
-      - name: Run DVC Pipeline (Fetch, Test, etc.)
-        # This single command runs all stages defined in your dvc.yaml
+      # --- Run DVC Pipeline (which includes your test_data stage) ---
+      - name: Run DVC Pipeline
         run: dvc repro
-      # -----------------------------------------------
+      # ------------------------------------------------------------
 
-      # --- MOVE DVC PUSH HERE ---
+      # ... (Steps for DVC push, Git commit, and Git push) ...
+
       - name: DVC Push data cache
-        # Push any data/cache changes made by dvc repro
         run: dvc push
-      # ------------------------
 
-      # --- MOVE GIT COMMIT AND PUSH HERE ---
       - name: Commit dvc.lock changes
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
-          git add dvc.lock # Add dvc.lock if it was updated by dvc repro
-          # Commit only if there are changes (handles cases where dvc.lock doesn't change)
+          git add dvc.lock
           git diff-index --quiet HEAD || git commit -m "Updated dvc.lock by GitHub Actions"
 
       - name: Push Git changes
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.PAT_TOKEN }}
-          # You might want to specify the branch, e.g., branch: main
-      # -------------------------------------
