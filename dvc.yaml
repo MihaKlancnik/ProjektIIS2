@@ -28,3 +28,15 @@ stages:
       - data/preprocessed/fear_greed_index.csv:
           persist: true
     always_changed: true
+
+  test_data:
+    cmd: |
+      poetry run python src/data/test_data.py
+      exit 0
+    deps:
+      - src/data/test_data.py
+      - data/preprocessed/price/
+    outs:
+      - data/reference/price:
+          persist: true
+      - reports/
