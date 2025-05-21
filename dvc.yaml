@@ -2,41 +2,29 @@ stages:
   fetch_crypto_data:
     cmd: >
       poetry run python src/data/fetch_save.py
-      git commit -am "Updated crypto data on `date` with DVC pipeline and GitHub workflows" 2>$null
+      git commit -am "Updated crypto data on `date` with DVC pipeline and GitHub workflows"
+      2>$null
       git push 2>$null
       dvc push 2>$null
     deps:
-      - src/data/fetch_save.py
+    - src/data/fetch_save.py
     params:
-      - fetch.url
+    - fetch.url
     outs:
-      - data/raw/crypto_prices.json
-      - data/preprocessed/price:
-          persist: true
+    - data/raw/crypto_prices.json
+    - data/preprocessed/price:
+        persist: true
     always_changed: true
 
-  fetch_fear_greed_data:
-    cmd: >
-      poetry run python src/data/fetch_fear_greed.py
-      git commit -am "Updated fear and greed data on `date` with DVC pipeline and GitHub workflows" 2>$null
-      git push 2>$null
-      dvc push 2>$null
-    deps:
-      - src/data/fetch_fear_greed.py
-    outs:
-      - data/raw/fear_greed_raw.csv
-      - data/preprocessed/fear_greed/fear_greed_index.csv:
-          persist: true
-    always_changed: true
   test_crypto_data:
     cmd: >
       poetry run python src/data/test_data.py
     deps:
-      - src/data/test_data.py
-      - data/preprocessed/price/bitcoin.csv
-      - data/preprocessed/price/ethereum.csv
-      - data/preprocessed/price/solana.csv
+    - src/data/test_data.py
+    - data/preprocessed/price/bitcoin.csv
+    - data/preprocessed/price/ethereum.csv
+    - data/preprocessed/price/solana.csv
     outs:
-      - reports/bitcoin_data_testing_report.html
-      - reports/ethereum_data_testing_report.html
-      - reports/solana_data_testing_report.html
+    - reports/bitcoin_data_testing_report.html
+    - reports/ethereum_data_testing_report.html
+    - reports/solana_data_testing_report.html

@@ -39,31 +39,13 @@ stages:
     outs:
     - path: data/preprocessed/price
       hash: md5
-      md5: 3cbb0ba92b860d71dfe435a15e3c38cc.dir
-      size: 9952
-      nfiles: 4
+      md5: 2b2a5d25ba30cdac923f3404c7d56f6e.dir
+      size: 9676
+      nfiles: 3
     - path: data/raw/crypto_prices.json
       hash: md5
       md5: 59492657ba1cf13a46cfcb6b2468e0d2
       size: 151
-  fetch_fear_greed_data:
-    cmd: "poetry run python src/data/fetch_fear_greed.py git commit -am \"Updated
-      fear and greed data on `date` with DVC pipeline and GitHub workflows\" 2>$null
-      git push 2>$null dvc push 2>$null\n"
-    deps:
-    - path: src/data/fetch_fear_greed.py
-      hash: md5
-      md5: 238b800f098a0f79bcc69d068ace6495
-      size: 3699
-    outs:
-    - path: data/preprocessed/fear_greed/fear_greed_index.csv
-      hash: md5
-      md5: aea72fdacde4c9becb4fa0d7bac4ad84
-      size: 27
-    - path: data/raw/fear_greed_raw.csv
-      hash: md5
-      md5: 2a5a6e87667efb304eb0d01ae625a7c8
-      size: 319
   test_crypto_data:
     cmd: "poetry run python src/data/test_data.py\n"
     deps:
