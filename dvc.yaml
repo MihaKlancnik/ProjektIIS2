@@ -7,24 +7,44 @@ stages:
       git push 2>$null
       dvc push 2>$null
     deps:
-    - src/data/fetch_save.py
+      - src/data/fetch_save.py
     params:
-    - fetch.url
+      - fetch.url
     outs:
-    - data/raw/crypto_prices.json
-    - data/preprocessed/price:
-        persist: true
+      - data/raw/crypto_prices.json
+      - data/preprocessed/price:
+          persist: true
+
+    always_changed: true
+
+  fetch_fear_greed_data:
+    cmd: >
+      poetry run python src/data/fetch_fear_greed.py
+      git add data\preprocessed\fear_greed.dvc
+      git commit -m "Updated Fear and Greed data and DVC tracking"
+      git push
+      dvc push 2>$null
+    deps:
+      - src/data/fetch_fear_greed.py
+      - params.yaml
+    params:
+      - fetch.fear_greed_url
+      - preprocess.fear_greed_output_dir
+      - preprocess.fear_greed_output_filename
+    outs:
+      - data/preprocessed/fear_greed:
+          persist: true
     always_changed: true
 
   test_crypto_data:
     cmd: >
       poetry run python src/data/test_data.py
     deps:
-    - src/data/test_data.py
-    - data/preprocessed/price/bitcoin.csv
-    - data/preprocessed/price/ethereum.csv
-    - data/preprocessed/price/solana.csv
+      - src/data/test_data.py
+      - data/preprocessed/price/bitcoin.csv
+      - data/preprocessed/price/ethereum.csv
+      - data/preprocessed/price/solana.csv
     outs:
-    - reports/bitcoin_data_testing_report.html
-    - reports/ethereum_data_testing_report.html
-    - reports/solana_data_testing_report.html
+      - reports/bitcoin_data_testing_report.html
+      - reports/ethereum_data_testing_report.html
+      - reports/solana_data_testing_report.html

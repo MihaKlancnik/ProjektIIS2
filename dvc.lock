@@ -39,28 +39,28 @@ stages:
     outs:
     - path: data/preprocessed/price
       hash: md5
-      md5: 2b2a5d25ba30cdac923f3404c7d56f6e.dir
-      size: 9676
+      md5: e7ef04da677411ed1f5f4bfdbef543d9.dir
+      size: 10099
       nfiles: 3
     - path: data/raw/crypto_prices.json
       hash: md5
-      md5: 59492657ba1cf13a46cfcb6b2468e0d2
-      size: 151
+      md5: b67cb5d40cf9158178c3ac6ea32b6e88
+      size: 150
   test_crypto_data:
     cmd: "poetry run python src/data/test_data.py\n"
     deps:
     - path: data/preprocessed/price/bitcoin.csv
       hash: md5
-      md5: 58911229dd27c4b049914ac20b5c3cf9
-      size: 3123
+      md5: fdfe8fae548c493c0fa38485c8c53cd8
+      size: 3263
     - path: data/preprocessed/price/ethereum.csv
       hash: md5
-      md5: 083362fbb4bd69299bbefb03800dc438
-      size: 3337
+      md5: 403ad225a5af87a9f2237c6a7578cc0f
+      size: 3482
     - path: data/preprocessed/price/solana.csv
       hash: md5
-      md5: a6b2ef4e7a8152e01718639e6b384c93
-      size: 3216
+      md5: 3606c96b03a2619cc644a93f8a441396
+      size: 3354
     - path: src/data/test_data.py
       hash: md5
       md5: d5cfa3f9534ea2252798db10125f6704
@@ -68,13 +68,37 @@ stages:
     outs:
     - path: reports/bitcoin_data_testing_report.html
       hash: md5
-      md5: 3ef8cf72a1acca033bbf81ec74effde0
-      size: 4182469
+      md5: db2a424fa2b142639c455257e8579164
+      size: 4182938
     - path: reports/ethereum_data_testing_report.html
       hash: md5
-      md5: b9b0ba81cabf00c85322553b724edd3b
-      size: 4181866
+      md5: 805cf0210dc8fe42de0b9a994c9e0a60
+      size: 4183452
     - path: reports/solana_data_testing_report.html
       hash: md5
-      md5: 1f14b1b6598eee04ef3b9bd76c4a77fe
-      size: 4181994
+      md5: 79a1b167d958c14d248f4599d794f81e
+      size: 4182835
+  fetch_fear_greed_data:
+    cmd: "poetry run python src/data/fetch_fear_greed.py git add data\\preprocessed\\
+      fear_greed.dvc git commit -m \"Updated Fear and Greed data and DVC tracking\"\
+      \ git push dvc push 2>$null\n"
+    deps:
+    - path: params.yaml
+      hash: md5
+      md5: 836f413164047ef39170950d032b534f
+      size: 545
+    - path: src/data/fetch_fear_greed.py
+      hash: md5
+      md5: bc714ff151068cc69e3dc77b41ad42bb
+      size: 3062
+    params:
+      params.yaml:
+        fetch.fear_greed_url: https://api.alternative.me/fng/?limit=10&format=json&date_format=world
+        preprocess.fear_greed_output_dir: data/preprocessed/fear_greed
+        preprocess.fear_greed_output_filename: fear_greed_index.csv
+    outs:
+    - path: data/preprocessed/fear_greed
+      hash: md5
+      md5: c1a9388d04b610cb9fadaa0c0136a2a9.dir
+      size: 329
+      nfiles: 1
