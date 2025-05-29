@@ -39,28 +39,28 @@ stages:
     outs:
     - path: data/preprocessed/price
       hash: md5
-      md5: e7ef04da677411ed1f5f4bfdbef543d9.dir
-      size: 10099
+      md5: f5d47437a650ab09563c037b67b3d6e8.dir
+      size: 10184
       nfiles: 3
     - path: data/raw/crypto_prices.json
       hash: md5
-      md5: b67cb5d40cf9158178c3ac6ea32b6e88
-      size: 150
+      md5: c7a1da1f611611404ff0c5fce55340e4
+      size: 151
   test_crypto_data:
     cmd: "poetry run python src/data/test_data.py\n"
     deps:
     - path: data/preprocessed/price/bitcoin.csv
       hash: md5
-      md5: fdfe8fae548c493c0fa38485c8c53cd8
-      size: 3263
+      md5: e07d6355bcf806de22a07f63f33cb651
+      size: 3291
     - path: data/preprocessed/price/ethereum.csv
       hash: md5
-      md5: 403ad225a5af87a9f2237c6a7578cc0f
-      size: 3482
+      md5: d619b010e9cee67782f705d6ecad501e
+      size: 3511
     - path: data/preprocessed/price/solana.csv
       hash: md5
-      md5: 3606c96b03a2619cc644a93f8a441396
-      size: 3354
+      md5: 6344150c730d0420d9aaeb5120a7a5f0
+      size: 3382
     - path: src/data/test_data.py
       hash: md5
       md5: d5cfa3f9534ea2252798db10125f6704
@@ -68,16 +68,16 @@ stages:
     outs:
     - path: reports/bitcoin_data_testing_report.html
       hash: md5
-      md5: db2a424fa2b142639c455257e8579164
-      size: 4182938
+      md5: a7095878bbb77918e28f09c0eb439f5f
+      size: 3594304
     - path: reports/ethereum_data_testing_report.html
       hash: md5
-      md5: 805cf0210dc8fe42de0b9a994c9e0a60
-      size: 4183452
+      md5: 5af84de6d6242370fd4b92b6427913eb
+      size: 3594652
     - path: reports/solana_data_testing_report.html
       hash: md5
-      md5: 79a1b167d958c14d248f4599d794f81e
-      size: 4182835
+      md5: 6d253f11f89bea187e8693af2f165b09
+      size: 3593886
   fetch_fear_greed_data:
     cmd: "poetry run python src/data/fetch_fear_greed.py git add data\\preprocessed\\
       fear_greed.dvc git commit -m \"Updated Fear and Greed data and DVC tracking\"\
@@ -99,6 +99,6 @@ stages:
     outs:
     - path: data/preprocessed/fear_greed
       hash: md5
-      md5: c1a9388d04b610cb9fadaa0c0136a2a9.dir
-      size: 329
+      md5: 8887bd9a35fcc826babc5c0694cece82.dir
+      size: 413
       nfiles: 1

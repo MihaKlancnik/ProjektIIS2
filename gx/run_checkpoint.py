@@ -28,3 +28,8 @@ else:
     sys.exit(1)
 #poetry run python gx\run_checkpoint.py bitcoin_checkpoint
 #poetry run python gx\run_checkpoint.py fear_greed_checkpoint
+
+
+#sam ttga das v flow #zazenes ga tk poetry run python run_checkpoint.py solana_checkpoint
+#poetry run python run_checkpoint.py ethereum_checkpoint TTGA DAS V FLOW... PREJ PA POPRAV VSE V gx\expectations
+#tk da bo delal (da nebo failal)

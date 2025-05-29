@@ -197,3 +197,12 @@ if __name__ == "__main__":
     # Exit the script with the overall status code
     sys.exit(0) # to mors pol spremenit, zdj mas tk da ti dela
     #sys.exit(overall_status)
+
+    #VSE SNOVI KO SO NA ESTUDIJU RAZN NADZOROVANJA NEBO
+    #ZAPRT TIP VPRASANJ
+    #MULTIBLE CHOCE
+    #SAM OBKROZEVALI BOMO
+    #ustni zagovori
+    #petek 13 junij = zagovor projektnih nalog + ustni zagovor
+    #7.julij je ustni ce mors 3. na izpit
+    
