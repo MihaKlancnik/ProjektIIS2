@@ -45,18 +45,17 @@ jobs:
       - name: Run fetch crypto script
         run: |
           poetry run python src/data/fetch_save.py
-          dvc add data/raw/crypto_prices.json data/preprocessed/price/bitcoin.csv data/preprocessed/price/ethereum.csv data/preprocessed/price/solana.csv
 
       - name: Run fetch fear and greed script
         run: |
           poetry run python src/data/fetch_fear_greed.py
-          dvc add data/preprocessed/fear_greed/fear_greed_index.csv
 
       - name: Commit pipeline changes
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
-          git add dvc.lock data/raw/crypto_prices.json.dvc data/preprocessed/price/bitcoin.csv.dvc data/preprocessed/price/ethereum.csv.dvc data/preprocessed/price/solana.csv.dvc data/preprocessed/fear_greed/fear_greed_index.csv.dvc
+          dvc commit
+          git add dvc.lock
           git commit -m "Updated data and dvc.lock on `date` with GitHub Actions" || true
           dvc push
 
