@@ -54,8 +54,8 @@ jobs:
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
-          dvc commit
-          git add dvc.lock
+          dvc commit -f
+          git add dvc.lock dvc.yaml **/*.dvc
           git commit -m "Updated data and dvc.lock on `date` with GitHub Actions" || true
           dvc push
 
