@@ -12,28 +12,22 @@ from datetime import datetime, timedelta
 def load_data(crypto_name):
     """Load cryptocurrency price data."""
     try:
-        # Try different potential file path patterns
-        potential_paths = [
-            f"data/preprocessed/price/{crypto_name.lower()}.csv",
-            f"data/{crypto_name.lower()}_prices.csv",
-            f"data/{crypto_name.lower()}.csv",
-            f"data/{crypto_name.lower()}_price.csv"
-        ]
-        
-        for path in potential_paths:
-            if os.path.exists(path):
-                print(f"Loading data from {path}")
-                df = pd.read_csv(path)
-                break
+        # Use only the specified file paths for each crypto
+        crypto_paths = {
+            'bitcoin': 'data/preprocessed/price/bitcoin.csv',
+            'ethereum': 'data/preprocessed/price/ethereum.csv',
+            'solana': 'data/preprocessed/price/solana.csv'
+        }
+        crypto_key = crypto_name.lower()
+        if crypto_key in crypto_paths:
+            path = crypto_paths[crypto_key]
         else:
-            # If no file is found, try the current directory
-            for path in [p.split('/')[-1] for p in potential_paths]:
-                if os.path.exists(path):
-                    print(f"Loading data from {path}")
-                    df = pd.read_csv(path)
-                    break
-            else:
-                raise FileNotFoundError(f"Could not find price data for {crypto_name}")
+            raise FileNotFoundError(f"No data path specified for {crypto_name}")
+        if os.path.exists(path):
+            print(f"Loading data from {path}")
+            df = pd.read_csv(path)
+        else:
+            raise FileNotFoundError(f"Could not find price data for {crypto_name} at the specified path: {path}")
         
         # Identify timestamp column
         timestamp_col = None
@@ -96,22 +90,13 @@ def load_data(crypto_name):
 def load_fear_greed():
     """Load fear and greed index data."""
     try:
-        # Try different potential file paths
-        potential_paths = [
-            "data/preprocessed/price/fear_greed_index.csv",
-            "data/preprocessed/fear_greed/fear_greed.csv",
-            "data/fear_greed.csv",
-            "src/data/fear_greed.csv",
-            "fear_greed.csv"
-        ]
-        
-        for path in potential_paths:
-            if os.path.exists(path):
-                print(f"Loading fear and greed data from {path}")
-                df = pd.read_csv(path)
-                break
+        # Use only the specified file path
+        path = "data/preprocessed/fear_greed/fear_greed_index.csv"
+        if os.path.exists(path):
+            print(f"Loading fear and greed data from {path}")
+            df = pd.read_csv(path)
         else:
-            raise FileNotFoundError("Could not find fear and greed data file")
+            raise FileNotFoundError("Could not find fear and greed data file at the specified path")
         
         # Check for expected columns
         date_col = None
@@ -246,17 +231,18 @@ def train_and_save_model(crypto_name, use_fng=False):
     
     # Create models directory if it doesn't exist
     os.makedirs('models', exist_ok=True)
-    
-    # Save model and associated objects
-    model_filename = f"models/{crypto_name.lower()}_model.pkl"
-    scaler_filename = f"models/{crypto_name.lower()}_scaler.pkl"
-    imputer_filename = f"models/{crypto_name.lower()}_imputer.pkl"
-    features_filename = f"models/{crypto_name.lower()}_features.txt"
-    
+
+    # Add suffix to filenames based on use_fng
+    suffix = '_with_fng' if use_fng else '_nofng'
+    model_filename = f"models/{crypto_name.lower()}_model{suffix}.pkl"
+    scaler_filename = f"models/{crypto_name.lower()}_scaler{suffix}.pkl"
+    imputer_filename = f"models/{crypto_name.lower()}_imputer{suffix}.pkl"
+    features_filename = f"models/{crypto_name.lower()}_features{suffix}.txt"
+
     joblib.dump(model, model_filename)
     joblib.dump(scaler, scaler_filename)
     joblib.dump(imputer, imputer_filename)
-    
+
     # Save feature names
     with open(features_filename, 'w') as f:
         for feature in feature_cols:
@@ -267,14 +253,15 @@ def train_and_save_model(crypto_name, use_fng=False):
 
 if __name__ == "__main__":
     print("Starting model training process...")
-    
-    # Train Bitcoin model with fear and greed index
-    train_and_save_model("bitcoin", use_fng=True)
-    
-    # Train Ethereum model
+
+    # Train models WITHOUT fear and greed index
+    train_and_save_model("bitcoin", use_fng=False)
     train_and_save_model("ethereum", use_fng=False)
-    
-    # Train Solana model
     train_and_save_model("solana", use_fng=False)
-    
+
+    # Train models WITH fear and greed index
+    train_and_save_model("bitcoin", use_fng=True)
+    train_and_save_model("ethereum", use_fng=True)
+    train_and_save_model("solana", use_fng=True)
+
     print("\nAll models trained and saved successfully!")
