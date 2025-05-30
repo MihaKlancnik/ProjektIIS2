@@ -5,282 +5,60 @@
     {
       "expectation_type": "expect_table_row_count_to_be_between",
       "kwargs": {
-        "max_value": null,
-        "min_value": 120
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {},
-            "metric_name": "table.row_count",
-            "metric_value_kwargs": null
-          },
-          "num_batches": 1
-        }
+        "min_value": 100,
+        "max_value": 1000000
       }
     },
     {
       "expectation_type": "expect_table_columns_to_match_set",
       "kwargs": {
         "column_set": [
-          "price",
-          "timestamp"
+          "timestamp",
+          "price"
         ],
-        "exact_match": null
-      },
-      "meta": {
-        "profiler_details": {
-          "success_ratio": 1.0
-        }
+        "exact_match": true
       }
     },
     {
       "expectation_type": "expect_column_values_to_be_unique",
       "kwargs": {
         "column": "timestamp"
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {
-              "column": "timestamp"
-            },
-            "metric_name": "column_values.unique.unexpected_count",
-            "metric_value_kwargs": null
-          },
-          "num_batches": 1
-        }
       }
     },
     {
       "expectation_type": "expect_column_values_to_not_be_null",
       "kwargs": {
         "column": "timestamp"
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {
-              "column": "timestamp"
-            },
-            "metric_name": "column_values.nonnull.unexpected_count",
-            "metric_value_kwargs": null
-          },
-          "num_batches": 1
-        }
       }
     },
     {
       "expectation_type": "expect_column_values_to_not_be_null",
       "kwargs": {
         "column": "price"
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {
-              "column": "price"
-            },
-            "metric_name": "column_values.nonnull.unexpected_count",
-            "metric_value_kwargs": null
-          },
-          "num_batches": 1
-        }
       }
     },
     {
-      "expectation_type": "expect_column_min_to_be_between",
+      "expectation_type": "expect_column_values_to_be_of_type",
       "kwargs": {
         "column": "price",
-        "max_value": 1450.21,
-        "min_value": 1450.21,
-        "strict_max": false,
-        "strict_min": false
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {
-              "column": "price"
-            },
-            "metric_name": "column.min",
-            "metric_value_kwargs": null
-          },
-          "num_batches": 1
-        }
+        "type_": "float"
       }
     },
     {
-      "expectation_type": "expect_column_quantile_values_to_be_between",
-      "kwargs": {
-        "allow_relative_error": false,
-        "column": "price",
-        "quantile_ranges": {
-          "quantiles": [
-            0.25,
-            0.5,
-            0.75
-          ],
-          "value_ranges": [
-            [
-              1761.09,
-              1761.09
-            ],
-            [
-              1792.0,
-              1792.0
-            ],
-            [
-              1811.38,
-              1811.38
-            ]
-          ]
-        }
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {
-              "column": "price"
-            },
-            "metric_name": "column.quantile_values",
-            "metric_value_kwargs": {
-              "allow_relative_error": false,
-              "quantiles": [
-                0.25,
-                0.5,
-                0.75
-              ]
-            }
-          },
-          "num_batches": 1
-        }
-      }
-    },
-    {
-      "expectation_type": "expect_column_median_to_be_between",
-      "kwargs": {
-        "column": "price",
-        "max_value": 1792.0,
-        "min_value": 1792.0,
-        "strict_max": false,
-        "strict_min": false
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {
-              "column": "price"
-            },
-            "metric_name": "column.median",
-            "metric_value_kwargs": null
-          },
-          "num_batches": 1
-        }
-      }
-    },
-    {
-      "expectation_type": "expect_column_mean_to_be_between",
-      "kwargs": {
-        "column": "price",
-        "max_value": 1813.278843,
-        "min_value": 1813.278843,
-        "strict_max": false,
-        "strict_min": false
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {
-              "column": "price"
-            },
-            "metric_name": "column.mean",
-            "metric_value_kwargs": null
-          },
-          "num_batches": 1
-        }
-      }
-    },
-    {
-      "expectation_type": "expect_column_stdev_to_be_between",
-      "kwargs": {
-        "column": "price",
-        "max_value": 242.61838157914588,
-        "min_value": 242.61838157914588,
-        "strict_max": false,
-        "strict_min": false
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {
-              "column": "price"
-            },
-            "metric_name": "column.standard_deviation",
-            "metric_value_kwargs": null
-          },
-          "num_batches": 1
-        }
-      }
-    },
-    {
-      "expectation_type": "expect_column_value_lengths_to_be_between",
+      "expectation_type": "expect_column_values_to_match_strftime_format",
       "kwargs": {
         "column": "timestamp",
-        "max_value": 19,
-        "min_value": 19,
-        "mostly": 1.0,
-        "strict_max": false,
-        "strict_min": false
-      },
-      "meta": {
-        "profiler_details": {
-          "column_max_length_range_estimator": {
-            "metric_configuration": {
-              "domain_kwargs": {
-                "column": "timestamp"
-              },
-              "metric_name": "column_values.length.max",
-              "metric_value_kwargs": null
-            },
-            "num_batches": 1
-          },
-          "column_min_length_range_estimator": {
-            "metric_configuration": {
-              "domain_kwargs": {
-                "column": "timestamp"
-              },
-              "metric_name": "column_values.length.min",
-              "metric_value_kwargs": null
-            },
-            "num_batches": 1
-          }
-        }
+        "strftime_format": "%Y-%m-%d %H:%M:%S"
       }
     },
     {
-      "expectation_type": "expect_column_values_to_match_regex",
+      "expectation_type": "expect_column_values_to_be_between",
       "kwargs": {
-        "column": "timestamp",
-        "mostly": 1.0,
-        "regex": "[A-Za-z0-9\\.,;:!?()\\\"'%\\-]+"
-      },
-      "meta": {
-        "profiler_details": {
-          "evaluated_regexes": {
-            "(?:25[0-5]|2[0-4]\\d|[01]\\d{2}|\\d{1,2})(?:.(?:25[0-5]|2[0-4]\\d|[01]\\d{2}|\\d{1,2})){3}": 1.0,
-            "-?\\d+": 1.0,
-            "-?\\d+(?:\\.\\d*)?": 1.0,
-            "<\\/?(?:p|a|b|img)(?: \\/)?>": 0.0,
-            "[A-Za-z0-9\\.,;:!?()\\\"'%\\-]+": 1.0,
-            "\\b[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}-[0-5][0-9a-fA-F]{3}-[089ab][0-9a-fA-F]{3}-\\b[0-9a-fA-F]{12}\\b ": 0.0,
-            "\\d+": 1.0,
-            "\\s+$": 0.0,
-            "^\\s+": 0.0,
-            "https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{2,255}\\.[a-z]{2,6}\\b(?:[-a-zA-Z0-9@:%_\\+.~#()?&//=]*)": 0.0
-          },
-          "success_ratio": 1.0
-        }
+        "column": "price",
+        "min_value": 1000,
+        "max_value": 10000,
+        "strict_min": false,
+        "strict_max": false
       }
     }
   ],
@@ -288,8 +66,8 @@
   "meta": {
     "citations": [
       {
-        "citation_date": "2025-05-25T14:11:57.593708Z",
-        "comment": "Created by effective Rule-Based Profiler of OnboardingDataAssistant with the configuration included.\n"
+        "citation_date": "2025-05-30T00:00:00Z",
+        "comment": "Custom suite for Ethereum price data with sensible, flexible expectations."
       }
     ],
     "great_expectations_version": "0.18.8"

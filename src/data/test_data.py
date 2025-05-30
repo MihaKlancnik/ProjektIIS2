@@ -178,9 +178,26 @@ def test_crypto_data(crypto_name):
 
 # Main execution block
 if __name__ == "__main__":
-    # Define the list of cryptocurrencies to test
+    import argparse
+    parser = argparse.ArgumentParser(description="Test crypto data or update reference data.")
+    parser.add_argument('--update-reference', action='store_true', help='Update reference data with current data for all cryptos.')
+    args = parser.parse_args()
+
     cryptos_to_test = ["bitcoin", "ethereum", "solana"]
     overall_status = 0 # 0 for success, 1 for failure
+
+    if args.update_reference:
+        for crypto in cryptos_to_test:
+            current_data_path = f"data/preprocessed/price/{crypto}.csv"
+            reference_data_path = f"data/reference/price/{crypto}.csv"
+            try:
+                current = pd.read_csv(current_data_path)
+                current.to_csv(reference_data_path, index=False)
+                print(f"Reference data updated for {crypto.capitalize()} (forced update).")
+            except Exception as e:
+                print(f"Error updating reference data for {crypto}: {e}")
+                overall_status = 1
+        sys.exit(overall_status)
 
     # Run tests for each cryptocurrency
     for crypto in cryptos_to_test:
@@ -195,7 +212,7 @@ if __name__ == "__main__":
         print("One or more cryptocurrency data tests failed.")
 
     # Exit the script with the overall status code
-    sys.exit(0) # to mors pol spremenit, zdj mas tk da ti dela
+    sys.exit(overall_status) # to mors pol spremenit, zdj mas tk da ti dela
     #sys.exit(overall_status)
 
     #VSE SNOVI KO SO NA ESTUDIJU RAZN NADZOROVANJA NEBO
@@ -205,4 +222,3 @@ if __name__ == "__main__":
     #ustni zagovori
     #petek 13 junij = zagovor projektnih nalog + ustni zagovor
     #7.julij je ustni ce mors 3. na izpit
-    
