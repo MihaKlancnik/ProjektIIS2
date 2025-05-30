@@ -68,3 +68,15 @@ stages:
       - reports/bitcoin_data_testing_report.html
       - reports/ethereum_data_testing_report.html
       - reports/solana_data_testing_report.html
+
+  train_models:
+    cmd: >
+      poetry run python src/model/train_models.py
+    deps:
+      - src/model/train_models.py
+      - data/preprocessed/price/bitcoin.csv
+      - data/preprocessed/price/ethereum.csv
+      - data/preprocessed/price/solana.csv
+      - data/preprocessed/fear_greed/fear_greed_index.csv
+    outs:
+      - models/
