@@ -2,10 +2,6 @@ stages:
   fetch_crypto_data:
     cmd: >
       poetry run python src/data/fetch_save.py
-      git commit -am "Updated crypto data on `date` with DVC pipeline and GitHub workflows"
-      2>$null
-      git push 2>$null
-      dvc push 2>$null
     deps:
       - src/data/fetch_save.py
     params:
@@ -20,10 +16,6 @@ stages:
   fetch_fear_greed_data:
     cmd: >
       poetry run python src/data/fetch_fear_greed.py
-      git add data\preprocessed\fear_greed.dvc
-      git commit -m "Updated Fear and Greed data and DVC tracking"
-      git push
-      dvc push 2>$null
     deps:
       - src/data/fetch_fear_greed.py
       - params.yaml
