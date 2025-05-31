@@ -42,13 +42,12 @@ jobs:
           dvc remote modify origin --local secret_access_key ${{ secrets.DAGSHUB_SECRET_ACCESS_KEY }}
           dvc pull
 
-      - name: Run fetch crypto script
+      - name: Run DVC pipeline
         run: |
-          poetry run python src/data/fetch_save.py
-
-      - name: Run fetch fear and greed script
-        run: |
-          poetry run python src/data/fetch_fear_greed.py
+          dvc repro
+          dvc push
+          git add dvc.lock
+          git commit -m "Update dvc.lock on `date` with GitHub Actions" || true
 
       - name: Commit pipeline changes
         run: |
