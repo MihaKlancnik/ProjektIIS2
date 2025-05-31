@@ -28,20 +28,6 @@ stages:
           persist: true
     always_changed: true
 
-  debug:
-    cmd: |
-      ls -lh data/preprocessed/fear_greed/
-      ls -lh data/preprocessed/price/
-      head -20 data/preprocessed/fear_greed/fear_greed_index.csv || true
-      head -20 data/preprocessed/price/bitcoin.csv || true
-      head -20 data/preprocessed/price/ethereum.csv || true
-      head -20 data/preprocessed/price/solana.csv || true
-    deps:
-      - data/preprocessed/fear_greed/fear_greed_index.csv
-      - data/preprocessed/price/bitcoin.csv
-      - data/preprocessed/price/ethereum.csv
-      - data/preprocessed/price/solana.csv
-
   validate_data:
     cmd: >
       cd gx && poetry run python run_checkpoint.py fear_greed_checkpoint && poetry run python run_checkpoint.py solana_checkpoint && poetry run python run_checkpoint.py ethereum_checkpoint && poetry run python run_checkpoint.py bitcoin_checkpoint && cd ..

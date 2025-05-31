@@ -42,6 +42,9 @@ jobs:
           dvc remote modify origin --local secret_access_key ${{ secrets.DAGSHUB_SECRET_ACCESS_KEY }}
           dvc pull
 
+      - name: List pulled data
+        run: ls -R data/preprocessed/
+
       - name: Run DVC pipeline
         run: |
           dvc repro
