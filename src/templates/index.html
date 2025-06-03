@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Predictions</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .crypto-container {
+            margin-bottom: 40px;
+        }
+        .crypto-title {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .crypto-graph {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <h1>Crypto Predictions</h1>
+    <form method="POST">
+        <label>
+            <input type="radio" name="use_fng" value="with_fng" {% if use_fng %}checked{% endif %}> Use Fear & Greed Index
+        </label>
+        <label>
+            <input type="radio" name="use_fng" value="nofng" {% if not use_fng %}checked{% endif %}> Do Not Use Fear & Greed Index
+        </label>
+        <button type="submit">Update</button>
+    </form>
+
+    <h2>Predictions for Next 5 Hours</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Cryptocurrency</th>
+                <th>Predictions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for crypto, prediction in predictions.items() %}
+            <tr>
+                <td>{{ crypto }}</td>
+                <td>{{ prediction | join(', ') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% for crypto, graph in graphs.items() %}
+    <div class="crypto-container">
+        <div class="crypto-title">{{ crypto.capitalize() }}</div>
+        <div class="crypto-graph">
+            <img src="data:image/png;base64,{{ graph }}" alt="{{ crypto }} graph">
+        </div>
+    </div>
+    {% endfor %}
+</body>
+</html>
