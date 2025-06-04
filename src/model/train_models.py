@@ -13,6 +13,12 @@ import mlflow
 import mlflow.tensorflow
 import mlflow.sklearn
 
+mlflow.set_tracking_uri("file://" + os.path.join(os.getcwd(), "mlruns"))
+
+mlruns_dir = os.path.join(os.getcwd(), "mlruns")
+if not os.path.exists(mlruns_dir):
+    os.makedirs(mlruns_dir)
+
 def load_data(crypto_name):
     """Load cryptocurrency price data."""
     try:
