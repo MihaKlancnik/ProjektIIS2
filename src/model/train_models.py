@@ -130,8 +130,8 @@ def create_features(df, lookback=24, target_col='price'):
         df_features[f'price_lag_{i}'] = df_features[target_col].shift(i)
 
     # Create rolling window features
-    df_features['price_rolling_mean_12'] = df_features[target_col].rolling(window=12).mean()
-    df_features['price_rolling_std_12'] = df_features[target_col].rolling(window=12).std()
+    df_features['price_rolling_mean_24'] = df_features[target_col].rolling(window=24).mean()
+    df_features['price_rolling_std_24'] = df_features[target_col].rolling(window=24).std()
 
     # Create target variables for next 5 hours
     for i in range(1, 6):
@@ -206,12 +206,13 @@ def train_and_save_model(crypto_name, use_fng=False):
 
     # Train model
     model = Sequential([
-        Dense(64, activation='relu', input_dim=X_scaled.shape[1]),
+        Dense(128, activation='relu', input_dim=X_scaled.shape[1]),
+        Dense(64, activation='relu'),
         Dense(32, activation='relu'),
         Dense(y.shape[1], activation='linear')
     ])
-    model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error')
-    model.fit(X_scaled, y, epochs=50, batch_size=32, verbose=1)
+    model.compile(optimizer=Adam(learning_rate=0.0005), loss='mean_squared_error')
+    model.fit(X_scaled, y, epochs=100, batch_size=64, verbose=1)
 
     # Save model and preprocessing artifacts
     os.makedirs('models', exist_ok=True)

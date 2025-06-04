@@ -54,7 +54,7 @@ def index():
 
         # Predict
         prediction = model.predict(X_scaled)
-        predictions[crypto_name] = [f'{price:.2f}' for price in prediction]
+        predictions[crypto_name] = [f'{float(price):.2f}' for price in prediction.flatten()]
 
         # Load last day's prices
         price_file = os.path.join(DATA_DIR, f'{crypto_name}.csv')
