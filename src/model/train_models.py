@@ -230,6 +230,7 @@ def train_and_save_model(crypto_name, use_fng=False):
 def train_and_log_model(crypto_name, use_fng=False):
     """Train model and log metrics to MLflow."""
     mlflow.set_experiment("Crypto Price Prediction")
+    mlflow.set_tracking_uri("file:./mlruns")
 
     with mlflow.start_run():
         # Log parameters
