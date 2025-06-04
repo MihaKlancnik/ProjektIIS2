@@ -9,10 +9,6 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
 import os
 import joblib
-import mlflow
-import mlflow.keras
-
-mlflow.set_tracking_uri("file://" + os.path.abspath("mlruns"))
 
 def load_data(crypto_name):
     """Load cryptocurrency price data."""
@@ -147,101 +143,87 @@ def create_features(df, lookback=24, target_col='price'):
     return df_features
 
 def train_and_save_model(crypto_name, use_fng=False):
-    """Train model for cryptocurrency price prediction with MLflow tracking."""
+    """Train model for cryptocurrency price prediction."""
     print(f"\nTraining model for {crypto_name}...")
 
-    # MLflow experiment setup
-    mlflow.set_experiment("Crypto_Price_Prediction")
+    # Load price data
+    df = load_data(crypto_name)
+    print(f"Data shape after loading: {df.shape}")
+
+    # Add fear and greed index if specified
+    if use_fng:
+        print("Including fear and greed index in model...")
+        fng_df = load_fear_greed()
+        print(f"Fear and Greed data shape: {fng_df.shape}")
+
+        if not fng_df.empty:
+            # Merge on date
+            df = pd.merge(df, fng_df, on='date', how='left')
+            print(f"Data shape after merging with Fear and Greed Index: {df.shape}")
+
+            # Forward fill missing values
+            df['fng_value'] = df['fng_value'].ffill()
+
+            # If there are still NaN values, use backward fill
+            if df['fng_value'].isna().any():
+                df['fng_value'] = df['fng_value'].bfill()
+
+            # If there are STILL NaN values, use mean
+            if df['fng_value'].isna().any():
+                df['fng_value'] = df['fng_value'].fillna(df['fng_value'].mean())
+
+    # Create features
+    df_features = create_features(df)
+    print(f"Feature dataframe shape: {df_features.shape}")
+
+    # Check if feature dataframe is empty
+    if df_features.empty:
+        print(f"❌ Feature dataframe is empty for {crypto_name}. Skipping training.")
+        return
+
+    # Define features and target
+    feature_cols = [col for col in df_features.columns if 'lag' in col or 'rolling' in col or 'hour' in col or 'day_of_week' in col]
+    if use_fng and 'fng_value' in df_features.columns:
+        feature_cols.append('fng_value')
+
+    target_cols = [f'price_next_{i}' for i in range(1, 6)]
+
+    X = df_features[feature_cols]
+    y = df_features[target_cols]
+
+    # Check if X or y is empty
+    if X.empty or y.empty:
+        print(f"❌ Feature matrix or target matrix is empty for {crypto_name}. Skipping training.")
+        return
+
+    # Handle missing values
+    imputer = SimpleImputer(strategy='mean')
+    X = imputer.fit_transform(X)
+
+    # Scale features
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    # Train model
+    model = Sequential([
+        Dense(64, activation='relu', input_dim=X_scaled.shape[1]),
+        Dense(32, activation='relu'),
+        Dense(y.shape[1], activation='linear')
+    ])
+    model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error')
+    model.fit(X_scaled, y, epochs=50, batch_size=32, verbose=1)
+
+    # Save model and preprocessing artifacts
+    os.makedirs('models', exist_ok=True)
     suffix = '_with_fng' if use_fng else '_nofng'
-    run_name = f"{crypto_name}{suffix}"
+    model.save(f'models/{crypto_name.lower()}_model{suffix}.h5')
+    joblib.dump(scaler, f'models/{crypto_name.lower()}_scaler{suffix}.pkl')
+    joblib.dump(imputer, f'models/{crypto_name.lower()}_imputer{suffix}.pkl')
 
-    with mlflow.start_run(run_name=run_name):
-        mlflow.set_tag("crypto", crypto_name)
-        mlflow.set_tag("fng_used", use_fng)
+    with open(f'models/{crypto_name.lower()}_features{suffix}.txt', 'w') as f:
+        f.write('\n'.join(feature_cols))
 
-        # Load price data
-        df = load_data(crypto_name)
-        print(f"Data shape after loading: {df.shape}")
-
-        if use_fng:
-            print("Including fear and greed index in model...")
-            fng_df = load_fear_greed()
-            if not fng_df.empty:
-                df = pd.merge(df, fng_df, on='date', how='left')
-                df['fng_value'] = df['fng_value'].ffill().bfill().fillna(df['fng_value'].mean())
-
-        # Create features
-        df_features = create_features(df)
-        print(f"Feature dataframe shape: {df_features.shape}")
-        if df_features.empty:
-            print(f"❌ Feature dataframe is empty for {crypto_name}. Skipping training.")
-            return
-
-        # Define features and target
-        feature_cols = [col for col in df_features.columns if 'lag' in col or 'rolling' in col or 'hour' in col or 'day_of_week' in col]
-        if use_fng and 'fng_value' in df_features.columns:
-            feature_cols.append('fng_value')
-
-        target_cols = [f'price_next_{i}' for i in range(1, 6)]
-
-        X = df_features[feature_cols]
-        y = df_features[target_cols]
-
-        if X.empty or y.empty:
-            print(f"❌ Feature matrix or target matrix is empty for {crypto_name}. Skipping training.")
-            return
-
-        # Log feature and target column names
-        mlflow.log_param("num_features", len(feature_cols))
-        mlflow.log_param("targets", ",".join(target_cols))
-
-        # Handle missing values
-        imputer = SimpleImputer(strategy='mean')
-        X = imputer.fit_transform(X)
-
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X)
-
-        # Model definition and training
-        model = Sequential([
-            Dense(64, activation='relu', input_dim=X_scaled.shape[1]),
-            Dense(32, activation='relu'),
-            Dense(y.shape[1], activation='linear')
-        ])
-        model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error')
-
-        # Autolog model config & training process
-        mlflow.keras.autolog()
-        model.fit(X_scaled, y, epochs=50, batch_size=32, verbose=1)
-
-        # Predictions & metric logging
-        y_pred = model.predict(X_scaled)
-        mse = mean_squared_error(y, y_pred)
-        rmse = np.sqrt(mse)
-        mlflow.log_metric("mse", mse)
-        mlflow.log_metric("rmse", rmse)
-
-        # Save model and preprocessing artifacts
-        os.makedirs('models', exist_ok=True)
-        model_path = f'models/{crypto_name.lower()}_model{suffix}.h5'
-        scaler_path = f'models/{crypto_name.lower()}_scaler{suffix}.pkl'
-        imputer_path = f'models/{crypto_name.lower()}_imputer{suffix}.pkl'
-        features_path = f'models/{crypto_name.lower()}_features{suffix}.txt'
-
-        model.save(model_path)
-        joblib.dump(scaler, scaler_path)
-        joblib.dump(imputer, imputer_path)
-        with open(features_path, 'w') as f:
-            f.write('\n'.join(feature_cols))
-
-        # Log artifacts
-        mlflow.log_artifact(scaler_path)
-        mlflow.log_artifact(imputer_path)
-        mlflow.log_artifact(features_path)
-
-        # Optionally register the model
-        mlflow.keras.log_model(model, artifact_path="keras_model")
-
+    print(f"Model for {crypto_name} saved successfully.")
 
 if __name__ == "__main__":
     print("Starting model training process...")
