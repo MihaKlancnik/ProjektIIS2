@@ -9,7 +9,6 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
 import os
 import joblib
-import mlflow
 
 def load_data(crypto_name):
     """Load cryptocurrency price data."""
@@ -227,125 +226,17 @@ def train_and_save_model(crypto_name, use_fng=False):
 
     print(f"Model for {crypto_name} saved successfully.")
 
-def train_and_log_model(crypto_name, use_fng=False):
-    """Train model and log metrics to MLflow."""
-    mlflow.set_experiment("Crypto Price Prediction")
-    mlflow.set_tracking_uri("file:./mlruns")
-
-    with mlflow.start_run():
-        # Log parameters
-        mlflow.log_param("crypto_name", crypto_name)
-        mlflow.log_param("model_type", "LSTM")
-        mlflow.log_param("use_fng", use_fng)
-
-        # Load price data
-        df = load_data(crypto_name)
-        print(f"Data shape after loading: {df.shape}")
-
-        # Add fear and greed index if specified
-        if use_fng:
-            print("Including fear and greed index in model...")
-            fng_df = load_fear_greed()
-            print(f"Fear and Greed data shape: {fng_df.shape}")
-
-            if not fng_df.empty:
-                # Merge on date
-                df = pd.merge(df, fng_df, on='date', how='left')
-                print(f"Data shape after merging with Fear and Greed Index: {df.shape}")
-
-                # Forward fill missing values
-                df['fng_value'] = df['fng_value'].ffill()
-
-                # If there are still NaN values, use backward fill
-                if df['fng_value'].isna().any():
-                    df['fng_value'] = df['fng_value'].bfill()
-
-                # If there are STILL NaN values, use mean
-                if df['fng_value'].isna().any():
-                    df['fng_value'] = df['fng_value'].fillna(df['fng_value'].mean())
-
-        # Create features
-        df_features = create_features(df)
-        print(f"Feature dataframe shape: {df_features.shape}")
-
-        # Check if feature dataframe is empty
-        if df_features.empty:
-            print(f"Feature dataframe is empty for {crypto_name}. Skipping training.")
-            return
-
-        # Define features and target
-        feature_cols = [col for col in df_features.columns if 'lag' in col or 'rolling' in col or 'hour' in col or 'day_of_week' in col]
-        if use_fng and 'fng_value' in df_features.columns:
-            feature_cols.append('fng_value')
-
-        target_cols = [f'price_next_{i}' for i in range(1, 6)]
-
-        X = df_features[feature_cols]
-        y = df_features[target_cols]
-
-        # Check if X or y is empty
-        if X.empty or y.empty:
-            print(f"Feature matrix or target matrix is empty for {crypto_name}. Skipping training.")
-            return
-
-        # Handle missing values
-        imputer = SimpleImputer(strategy='mean')
-        X = imputer.fit_transform(X)
-
-        # Scale features
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X)
-
-        # Train model
-        model = Sequential([
-            Dense(128, activation='relu', input_dim=X_scaled.shape[1]),
-            Dense(64, activation='relu'),
-            Dense(32, activation='relu'),
-            Dense(y.shape[1], activation='linear')
-        ])
-        model.compile(optimizer=Adam(learning_rate=0.0005), loss='mean_squared_error')
-        model.fit(X_scaled, y, epochs=30, batch_size=64, verbose=1)
-
-        # Log metrics
-        y_pred = model.predict(X_scaled)
-        mse = mean_squared_error(y, y_pred)
-        mlflow.log_metric("mean_squared_error", mse)
-
-        # Save model and preprocessing artifacts
-        os.makedirs('models', exist_ok=True)
-        suffix = '_with_fng' if use_fng else '_nofng'
-        model_path = f'models/{crypto_name.lower()}_model{suffix}.h5'
-        model.save(model_path)
-        mlflow.keras.log_model(model, "model")
-
-        scaler_path = f'models/{crypto_name.lower()}_scaler{suffix}.pkl'
-        joblib.dump(scaler, scaler_path)
-
-        imputer_path = f'models/{crypto_name.lower()}_imputer{suffix}.pkl'
-        joblib.dump(imputer, imputer_path)
-
-        with open(f'models/{crypto_name.lower()}_features{suffix}.txt', 'w') as f:
-            f.write('\n'.join(feature_cols))
-
-        print(f"Model for {crypto_name} saved successfully.")
-
 if __name__ == "__main__":
     print("Starting model training process...")
 
     # Train models WITHOUT fear and greed index
-    train_and_log_model("bitcoin", use_fng=False)
-    train_and_log_model("ethereum", use_fng=False)
-    train_and_log_model("solana", use_fng=False)
+    train_and_save_model("bitcoin", use_fng=False)
+    train_and_save_model("ethereum", use_fng=False)
+    train_and_save_model("solana", use_fng=False)
 
     # Train models WITH fear and greed index
-    train_and_log_model("bitcoin", use_fng=True)
-    train_and_log_model("ethereum", use_fng=True)
-    train_and_log_model("solana", use_fng=True)
+    train_and_save_model("bitcoin", use_fng=True)
+    train_and_save_model("ethereum", use_fng=True)
+    train_and_save_model("solana", use_fng=True)
 
     print("\nAll models trained and saved successfully!")
-
-
-# poetry run mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns
-#poetry run python src/model/train_models.py
-#poetry run mlflow ui
-#poetry run mlflow ui
