@@ -249,11 +249,11 @@ def train_and_save_model(crypto_name, use_fng=False):
         print(f"Logged final_train_loss: {final_train_loss} for {crypto_name}{suffix}")
 
         # Save model, scaler, imputer, and features
-        model_dir = 'models' # Ensure this directory exists or is created
+        model_dir = os.path.join(os.getcwd(), 'models')  # Ensure this directory exists or is created
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)
 
-        model_path = os.path.join(model_dir, f'{crypto_name}_model{suffix}.h5')
+        model_path = os.path.join(model_dir, f'{crypto_name}_model{suffix}.keras')
         scaler_path = os.path.join(model_dir, f'{crypto_name}_scaler{suffix}.pkl')
         imputer_path = os.path.join(model_dir, f'{crypto_name}_imputer{suffix}.pkl')
         features_path = os.path.join(model_dir, f'{crypto_name}_features{suffix}.txt')
@@ -263,15 +263,20 @@ def train_and_save_model(crypto_name, use_fng=False):
         joblib.dump(imputer, imputer_path)
         with open(features_path, 'w') as f:
             for feature in feature_cols:
-                f.write(f"{feature}\\n")
+                f.write(f"{feature}\n")
         
         print(f"Saved model and artifacts locally for {crypto_name}{suffix}.")
 
         # Log model and artifacts to MLflow
-        mlflow.tensorflow.log_model(model, artifact_path=f"{crypto_name}{suffix}_tf_model")
+        example_input = np.random.rand(1, X_scaled.shape[1])  # Example input matching the model's input shape
+        mlflow.tensorflow.log_model(
+            model,
+            artifact_path=f"{crypto_name}{suffix}_tf_model",
+            input_example=example_input
+        )
         mlflow.sklearn.log_model(scaler, artifact_path=f"{crypto_name}{suffix}_scaler_model")
         mlflow.sklearn.log_model(imputer, artifact_path=f"{crypto_name}{suffix}_imputer_model")
-        mlflow.log_text("\\n".join(feature_cols), artifact_file=f"{crypto_name}{suffix}_features.txt")
+        mlflow.log_text("\n".join(feature_cols), artifact_file=f"{crypto_name}{suffix}_features.txt")
         print(f"Logged model and artifacts to MLflow for {crypto_name}{suffix}.")
 
     print(f"Finished training and logging for {crypto_name}{suffix}.")
