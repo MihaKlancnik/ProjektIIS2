@@ -277,12 +277,12 @@ def train_and_save_model(crypto_name, use_fng=False):
         example_input = np.random.rand(1, X_scaled.shape[1])  # Example input matching the model's input shape
         mlflow.tensorflow.log_model(
             model,
-            artifact_path=f"{crypto_name}{suffix}_tf_model",
+            artifact_path=os.path.join("artifacts", f"{crypto_name}{suffix}_tf_model"),
             input_example=example_input
         )
-        mlflow.sklearn.log_model(scaler, artifact_path=f"{crypto_name}{suffix}_scaler_model")
-        mlflow.sklearn.log_model(imputer, artifact_path=f"{crypto_name}{suffix}_imputer_model")
-        mlflow.log_text("\n".join(feature_cols), artifact_file=f"{crypto_name}{suffix}_features.txt")
+        mlflow.sklearn.log_model(scaler, artifact_path=os.path.join("artifacts", f"{crypto_name}{suffix}_scaler_model"))
+        mlflow.sklearn.log_model(imputer, artifact_path=os.path.join("artifacts", f"{crypto_name}{suffix}_imputer_model"))
+        mlflow.log_text("\n".join(feature_cols), artifact_file=os.path.join("artifacts", f"{crypto_name}{suffix}_features.txt"))
         print(f"Logged model and artifacts to MLflow for {crypto_name}{suffix}.")
 
     print(f"Finished training and logging for {crypto_name}{suffix}.")
