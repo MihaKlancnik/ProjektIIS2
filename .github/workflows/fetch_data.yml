@@ -9,6 +9,8 @@ jobs:
   fetch_data:
     name: Fetch and Pre-process Crypto & Fear/Greed Data
     runs-on: ubuntu-latest
+    env:
+      MLFLOW_TRACKING_URI: file://${{ github.workspace }}/mlruns
 
     steps:
       - name: Checkout repository

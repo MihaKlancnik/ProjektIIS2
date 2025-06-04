@@ -12,6 +12,8 @@ import joblib
 import mlflow
 import mlflow.keras
 
+mlflow.set_tracking_uri("file://" + os.path.abspath("mlruns"))
+
 def load_data(crypto_name):
     """Load cryptocurrency price data."""
     try:
