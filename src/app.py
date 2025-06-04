@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
 from model.train_models import load_data, load_fear_greed, create_features
+from tensorflow.keras.models import Sequential, load_model
 
 app = Flask(__name__)
 
@@ -21,7 +22,7 @@ def index():
     graphs = {}
 
     for crypto_name in cryptos:
-        model_path = os.path.join(MODEL_DIR, f'{crypto_name}_model{suffix}.pkl')
+        model_path = os.path.join(MODEL_DIR, f'{crypto_name}_model{suffix}.h5')
         scaler_path = os.path.join(MODEL_DIR, f'{crypto_name}_scaler{suffix}.pkl')
         imputer_path = os.path.join(MODEL_DIR, f'{crypto_name}_imputer{suffix}.pkl')
         features_path = os.path.join(MODEL_DIR, f'{crypto_name}_features{suffix}.txt')
@@ -30,7 +31,8 @@ def index():
             predictions[crypto_name] = ['Missing model files']
             continue
 
-        model = joblib.load(model_path)
+        # Update the model loading logic to use the new neural network model
+        model = load_model(model_path)
         scaler = joblib.load(scaler_path)
         imputer = joblib.load(imputer_path)
 
@@ -51,7 +53,7 @@ def index():
         X_scaled = scaler.transform(X_imputed)
 
         # Predict
-        prediction = model.predict(X_scaled)[0]
+        prediction = model.predict(X_scaled)
         predictions[crypto_name] = [f'{price:.2f}' for price in prediction]
 
         # Load last day's prices

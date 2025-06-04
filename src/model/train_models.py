@@ -1,13 +1,14 @@
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import mean_squared_error
-import joblib
-import os
 from datetime import datetime, timedelta
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.optimizers import Adam
+import os
+import joblib
 
 def load_data(crypto_name):
     """Load cryptocurrency price data."""
@@ -32,7 +33,7 @@ def load_data(crypto_name):
         # Identify timestamp column
         timestamp_col = None
         for col in df.columns:
-            if 'time' in col.lower() or 'date' in col.lower():
+            if 'timestamp' in col.lower() or 'date' in col.lower():
                 timestamp_col = col
                 break
         
@@ -43,7 +44,7 @@ def load_data(crypto_name):
         # Identify price column
         price_col = None
         for col in df.columns:
-            if 'price' in col.lower() or 'value' in col.lower():
+            if 'price' in col.lower():
                 price_col = col
                 break
         
@@ -64,13 +65,7 @@ def load_data(crypto_name):
         clean_df = clean_df.sort_values('timestamp')
         
         # Handle missing values
-        clean_df['price'] = clean_df['price'].fillna(method='ffill')
-        
-        if clean_df['price'].isna().any():
-            # If there are still NaN values at the beginning, use bfill
-            clean_df['price'] = clean_df['price'].fillna(method='bfill')
-        
-        # If there are STILL NaN values, drop them
+        clean_df['price'] = clean_df['price'].fillna(method='ffill').fillna(method='bfill')
         clean_df = clean_df.dropna(subset=['price'])
         
         # Add date column for merging with fear and greed data
@@ -97,159 +92,138 @@ def load_fear_greed():
             df = pd.read_csv(path)
         else:
             raise FileNotFoundError("Could not find fear and greed data file at the specified path")
-        
-        # Check for expected columns
-        date_col = None
-        value_col = None
-        
-        for col in df.columns:
-            if 'date' in col.lower():
-                date_col = col
-            elif 'value' in col.lower() or 'index' in col.lower() or 'fng' in col.lower():
-                value_col = col
-        
-        # If columns not found, make some assumptions
-        if date_col is None and len(df.columns) >= 2:
-            # Try the last column as date
-            date_col = df.columns[-1]
-        
-        if value_col is None and len(df.columns) >= 1:
-            # Try the first column as value
-            value_col = df.columns[0]
-        
-        # Create clean dataframe
+
+        # Identify columns
+        date_col = next((col for col in df.columns if 'date' in col.lower()), None)
+        value_col = next((col for col in df.columns if 'value' in col.lower() or 'index' in col.lower()), None)
+
+        if not date_col or not value_col:
+            raise ValueError("Required columns not found in Fear and Greed data.")
+
         clean_df = pd.DataFrame()
-        
-        # Try to parse date with different formats
-        try:
-            clean_df['date'] = pd.to_datetime(df[date_col])
-        except:
-            try:
-                clean_df['date'] = pd.to_datetime(df[date_col], format='%d-%m-%Y')
-            except:
-                try:
-                    clean_df['date'] = pd.to_datetime(df[date_col], format='%m-%d-%Y')
-                except Exception as e:
-                    print(f"Warning: Could not parse date column: {e}")
-                    # Use row index as date as last resort
-                    clean_df['date'] = pd.date_range(start='2025-05-01', periods=len(df), freq='D')
-        
-        # Get value column
+        # Convert date format to match price data
+        clean_df['date'] = pd.to_datetime(df[date_col], format='%d-%m-%Y', errors='coerce')
         clean_df['fng_value'] = pd.to_numeric(df[value_col], errors='coerce')
-        
-        # Handle missing values
-        clean_df['fng_value'] = clean_df['fng_value'].fillna(method='ffill').fillna(method='bfill')
-        
-        # Sort by date
-        clean_df = clean_df.sort_values('date')
-        
+
+        clean_df['fng_value'] = clean_df['fng_value'].ffill().bfill()
+        clean_df = clean_df.dropna()
+
         return clean_df
-    
+
     except Exception as e:
-        print(f"Error loading fear and greed data: {e}")
+        print(f"Error loading Fear and Greed data: {e}")
         # Return empty DataFrame with required columns
         return pd.DataFrame(columns=['date', 'fng_value'])
 
 def create_features(df, lookback=24, target_col='price'):
     """Create features for price prediction model."""
+    # Ensure there are enough rows for feature creation
+    min_rows_required = lookback + 12 + 5  # Lookback + rolling window + target shifts
+    if len(df) < min_rows_required:
+        print(f"❌ Not enough rows for feature creation. Required: {min_rows_required}, Available: {len(df)}")
+        return pd.DataFrame()
+
     df_features = df.copy()
-    
+
     # Create lagged features
     for i in range(1, lookback + 1):
         df_features[f'price_lag_{i}'] = df_features[target_col].shift(i)
-    
+
     # Create rolling window features
     df_features['price_rolling_mean_12'] = df_features[target_col].rolling(window=12).mean()
     df_features['price_rolling_std_12'] = df_features[target_col].rolling(window=12).std()
-    
+
     # Create target variables for next 5 hours
     for i in range(1, 6):
         df_features[f'price_next_{i}'] = df_features[target_col].shift(-i)
-    
+
     # Drop rows with NaN values
     df_features = df_features.dropna()
-    
+
     return df_features
 
 def train_and_save_model(crypto_name, use_fng=False):
     """Train model for cryptocurrency price prediction."""
     print(f"\nTraining model for {crypto_name}...")
-    
+
     # Load price data
     df = load_data(crypto_name)
-    
+    print(f"Data shape after loading: {df.shape}")
+
     # Add fear and greed index if specified
     if use_fng:
         print("Including fear and greed index in model...")
         fng_df = load_fear_greed()
-        
+        print(f"Fear and Greed data shape: {fng_df.shape}")
+
         if not fng_df.empty:
             # Merge on date
-            df = pd.merge(df, fng_df[['date', 'fng_value']], on='date', how='left')
-            
+            df = pd.merge(df, fng_df, on='date', how='left')
+            print(f"Data shape after merging with Fear and Greed Index: {df.shape}")
+
             # Forward fill missing values
-            df['fng_value'] = df['fng_value'].fillna(method='ffill')
-            
+            df['fng_value'] = df['fng_value'].ffill()
+
             # If there are still NaN values, use backward fill
             if df['fng_value'].isna().any():
-                df['fng_value'] = df['fng_value'].fillna(method='bfill')
-            
+                df['fng_value'] = df['fng_value'].bfill()
+
             # If there are STILL NaN values, use mean
             if df['fng_value'].isna().any():
                 df['fng_value'] = df['fng_value'].fillna(df['fng_value'].mean())
-    
+
     # Create features
     df_features = create_features(df)
-    
+    print(f"Feature dataframe shape: {df_features.shape}")
+
+    # Check if feature dataframe is empty
+    if df_features.empty:
+        print(f"❌ Feature dataframe is empty for {crypto_name}. Skipping training.")
+        return
+
     # Define features and target
     feature_cols = [col for col in df_features.columns if 'lag' in col or 'rolling' in col or 'hour' in col or 'day_of_week' in col]
     if use_fng and 'fng_value' in df_features.columns:
         feature_cols.append('fng_value')
-    
+
     target_cols = [f'price_next_{i}' for i in range(1, 6)]
-    
+
     X = df_features[feature_cols]
     y = df_features[target_cols]
-    
-    # Handle any remaining missing values
+
+    # Check if X or y is empty
+    if X.empty or y.empty:
+        print(f"❌ Feature matrix or target matrix is empty for {crypto_name}. Skipping training.")
+        return
+
+    # Handle missing values
     imputer = SimpleImputer(strategy='mean')
     X = imputer.fit_transform(X)
-    
+
     # Scale features
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
-    
+
     # Train model
-    # Use RandomForestRegressor as it's more robust
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
-    model.fit(X_scaled, y)
-    
-    # Evaluate model
-    y_pred = model.predict(X_scaled)
-    mse = mean_squared_error(y, y_pred)
-    print(f"{crypto_name} model MSE: {mse:.2f}")
-    
-    # Create models directory if it doesn't exist
+    model = Sequential([
+        Dense(64, activation='relu', input_dim=X_scaled.shape[1]),
+        Dense(32, activation='relu'),
+        Dense(y.shape[1], activation='linear')
+    ])
+    model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error')
+    model.fit(X_scaled, y, epochs=50, batch_size=32, verbose=1)
+
+    # Save model and preprocessing artifacts
     os.makedirs('models', exist_ok=True)
-
-    # Add suffix to filenames based on use_fng
     suffix = '_with_fng' if use_fng else '_nofng'
-    model_filename = f"models/{crypto_name.lower()}_model{suffix}.pkl"
-    scaler_filename = f"models/{crypto_name.lower()}_scaler{suffix}.pkl"
-    imputer_filename = f"models/{crypto_name.lower()}_imputer{suffix}.pkl"
-    features_filename = f"models/{crypto_name.lower()}_features{suffix}.txt"
+    model.save(f'models/{crypto_name.lower()}_model{suffix}.h5')
+    joblib.dump(scaler, f'models/{crypto_name.lower()}_scaler{suffix}.pkl')
+    joblib.dump(imputer, f'models/{crypto_name.lower()}_imputer{suffix}.pkl')
 
-    joblib.dump(model, model_filename)
-    joblib.dump(scaler, scaler_filename)
-    joblib.dump(imputer, imputer_filename)
+    with open(f'models/{crypto_name.lower()}_features{suffix}.txt', 'w') as f:
+        f.write('\n'.join(feature_cols))
 
-    # Save feature names
-    with open(features_filename, 'w') as f:
-        for feature in feature_cols:
-            f.write(f"{feature}\n")
-    
-    print(f"Model saved to {model_filename}")
-    return model, scaler, imputer, feature_cols
+    print(f"Model for {crypto_name} saved successfully.")
 
 if __name__ == "__main__":
     print("Starting model training process...")
