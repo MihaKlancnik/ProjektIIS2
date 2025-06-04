@@ -303,7 +303,7 @@ def train_and_log_model(crypto_name, use_fng=False):
             Dense(y.shape[1], activation='linear')
         ])
         model.compile(optimizer=Adam(learning_rate=0.0005), loss='mean_squared_error')
-        model.fit(X_scaled, y, epochs=100, batch_size=64, verbose=1)
+        model.fit(X_scaled, y, epochs=30, batch_size=64, verbose=1)
 
         # Log metrics
         y_pred = model.predict(X_scaled)
