@@ -15,6 +15,8 @@ def run_model(crypto_name, use_fng=True):
 
     if use_fng:
         fng_df = load_fear_greed()
+        # Ensure date alignment and forward-fill missing values
+        fng_df['date'] = pd.to_datetime(fng_df['date'], format='%d-%m-%Y')
         df = pd.merge(df, fng_df[['date', 'fng_value']], on='date', how='left')
         df['fng_value'] = df['fng_value'].ffill().bfill().fillna(df['fng_value'].mean())
 

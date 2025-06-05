@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.losses import MeanSquaredError
 import os
 import joblib
 import mlflow
@@ -234,10 +235,10 @@ def train_and_save_model(crypto_name, use_fng=False):
         ])
 
         # Compile model
-        model.compile(optimizer=Adam(learning_rate=0.001), loss='mse')
+        model.compile(optimizer=Adam(learning_rate=0.001), loss=MeanSquaredError())
         mlflow.log_param("optimizer_name", "adam")
         mlflow.log_param("learning_rate", 0.001)
-        mlflow.log_param("loss_function", "mse")
+        mlflow.log_param("loss_function", "MeanSquaredError")
 
         # Train model
         epochs = 50
@@ -269,7 +270,7 @@ def train_and_save_model(crypto_name, use_fng=False):
         joblib.dump(imputer, imputer_path)
         with open(features_path, 'w') as f:
             for feature in feature_cols:
-                f.write(f"{feature}\\n")
+                f.write(f"{feature}\n")
         
         print(f"Saved model and artifacts locally for {crypto_name}{suffix}.")
 
@@ -297,3 +298,6 @@ if __name__ == "__main__":
     train_and_save_model("solana", use_fng=True)
 
     print("\nAll models trained and saved successfully!")
+
+        #shranit si mors vse napovedi ko ti jih da v frontendu pa pol fertchas podatke ko so svezi 
+    #tkda dodaj v frontend kok uspesno si napovedu pol ko ze dobis podatke
