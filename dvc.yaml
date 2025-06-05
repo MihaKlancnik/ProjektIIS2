@@ -75,3 +75,12 @@ stages:
       - data/preprocessed/fear_greed/fear_greed_index.csv
     outs:
       - models/
+
+  save_predictions:
+    cmd: >
+      poetry run python src/model/test_models.py
+    deps:
+      - src/model/test_models.py
+    outs:
+      - predictions/
+    always_changed: true

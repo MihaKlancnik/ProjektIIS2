@@ -241,7 +241,7 @@ def train_and_save_model(crypto_name, use_fng=False):
         mlflow.log_param("loss_function", "MeanSquaredError")
 
         # Train model
-        epochs = 50
+        epochs = 20
         batch_size = 32
         mlflow.log_param("epochs", epochs)
         mlflow.log_param("batch_size", batch_size)
