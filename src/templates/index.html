@@ -71,5 +71,19 @@
         </div>
     </div>
     {% endfor %}
+
+    <h2>Comparison of Actual vs Predicted Prices</h2>
+    {% for crypto, comparison_graph in comparison_graphs.items() %}
+    <div class="crypto-container">
+        <div class="crypto-title">{{ crypto.capitalize() }} Comparison</div>
+        <div class="crypto-graph">
+            {% if comparison_graph %}
+            <img src="data:image/png;base64,{{ comparison_graph }}" alt="{{ crypto }} comparison graph">
+            {% else %}
+            <p>No comparison data available for {{ crypto }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
 </body>
 </html>

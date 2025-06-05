@@ -72,3 +72,21 @@ stages:
       - data/preprocessed/fear_greed/fear_greed_index.csv
     outs:
       - models/
+
+  test_models:
+    cmd: >
+      poetry run python src/model/test_models.py
+    deps:
+      - src/model/test_models.py
+      - models/
+      - data/preprocessed/price/bitcoin.csv
+      - data/preprocessed/price/ethereum.csv
+      - data/preprocessed/price/solana.csv
+      - data/preprocessed/fear_greed/fear_greed_index.csv
+    outs:
+      - predictions/bitcoin_prediction_nofng.csv
+      - predictions/bitcoin_prediction_with_fng.csv
+      - predictions/ethereum_prediction_nofng.csv
+      - predictions/ethereum_prediction_with_fng.csv
+      - predictions/solana_prediction_nofng.csv
+      - predictions/solana_prediction_with_fng.csv

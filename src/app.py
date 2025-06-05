@@ -20,6 +20,7 @@ def index():
     use_fng = request.form.get('use_fng', 'with_fng') == 'with_fng'
     suffix = '_with_fng' if use_fng else '_nofng'
     graphs = {}
+    comparison_graphs = {}
 
     for crypto_name in cryptos:
         model_path = os.path.join(MODEL_DIR, f'{crypto_name}_model{suffix}.h5')
@@ -83,7 +84,53 @@ def index():
         graphs[crypto_name] = base64.b64encode(buf.getvalue()).decode('utf-8')
         buf.close()
 
-    return render_template('index.html', predictions=predictions, graphs=graphs, use_fng=use_fng)
+        # Load prediction data
+        prediction_file = os.path.join(os.path.dirname(__file__), f'../predictions/{crypto_name}_prediction{suffix}.csv')
+        if not os.path.exists(prediction_file):
+            comparison_graphs[crypto_name] = None
+            continue
+
+        prediction_data = pd.read_csv(prediction_file)
+        prediction_data['timestamp'] = pd.to_datetime(prediction_data['timestamp'])
+
+        # Load actual price data
+        price_file = os.path.join(DATA_DIR, f'{crypto_name}.csv')
+        if not os.path.exists(price_file):
+            comparison_graphs[crypto_name] = None
+            continue
+
+        price_data = pd.read_csv(price_file)
+        price_data['timestamp'] = pd.to_datetime(price_data['timestamp'])
+
+        # Filter actual price data to match prediction timestamps
+        merged_data = pd.merge(prediction_data, price_data, on='timestamp', how='inner', suffixes=('_predicted', '_actual'))
+
+        # Filter data for the last two days
+        two_days_ago = pd.Timestamp.now() - pd.Timedelta(days=2)
+        prediction_data = prediction_data[prediction_data['timestamp'] >= two_days_ago]
+        price_data = price_data[price_data['timestamp'] >= two_days_ago]
+
+        # Merge filtered data
+        merged_data = pd.merge(prediction_data, price_data, on='timestamp', how='inner', suffixes=('_predicted', '_actual'))
+
+        # Create comparison graph
+        plt.figure(figsize=(10, 5))
+        plt.plot(merged_data['timestamp'], merged_data['price_actual'], marker='o', label='Actual Prices', color='blue')
+        plt.plot(merged_data['timestamp'], merged_data['price_predicted'], marker='o', label='Predicted Prices', color='red')
+        plt.title(f'{crypto_name.capitalize()} Actual vs Predicted Prices')
+        plt.xlabel('Timestamp')
+        plt.ylabel('Price')
+        plt.legend()
+        plt.grid(True)
+
+        # Save graph to base64
+        buf = BytesIO()
+        plt.savefig(buf, format='png')
+        buf.seek(0)
+        comparison_graphs[crypto_name] = base64.b64encode(buf.getvalue()).decode('utf-8')
+        buf.close()
+
+    return render_template('index.html', predictions=predictions, graphs=graphs, comparison_graphs=comparison_graphs, use_fng=use_fng)
 
 if __name__ == '__main__':
     app.run(debug=True)
