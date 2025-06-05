@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_file
 import os
 import joblib
 import pandas as pd
@@ -131,6 +131,14 @@ def index():
         buf.close()
 
     return render_template('index.html', predictions=predictions, graphs=graphs, comparison_graphs=comparison_graphs, use_fng=use_fng)
+
+@app.route('/reports/<report_name>')
+def get_report(report_name):
+    return send_file(f'reports/{report_name}')
+
+@app.route('/validations/<validation_suite>')
+def get_validation(validation_suite):
+    return send_file(f'gx/uncommitted/data_docs/local_site/validations/{validation_suite}')
 
 if __name__ == '__main__':
     app.run(debug=True)
