@@ -47,7 +47,7 @@ jobs:
         run: |
           dvc remote modify origin --local access_key_id ${{ secrets.DAGSHUB_ACCESS_KEY_ID }}
           dvc remote modify origin --local secret_access_key ${{ secrets.DAGSHUB_SECRET_ACCESS_KEY }}
-          dvc pull
+          dvc pull --force
 
       - name: List pulled data
         run: ls -R data/preprocessed/

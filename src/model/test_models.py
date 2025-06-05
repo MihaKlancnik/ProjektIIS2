@@ -13,6 +13,9 @@ def save_predictions_to_csv(crypto_name, predictions, use_fng):
     suffix = "_with_fng" if use_fng else "_nofng"
     file_path = f"predictions/{crypto_name.lower()}_prediction{suffix}.csv"
 
+    # Ensure the predictions folder exists
+    os.makedirs("predictions", exist_ok=True)
+
     # Prepare data to append
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     rows = [[timestamp, price] for price in predictions]
