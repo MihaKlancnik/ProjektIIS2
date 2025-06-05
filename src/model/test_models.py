@@ -11,7 +11,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src'
 
 def save_predictions_to_csv(crypto_name, predictions, use_fng):
     suffix = "_with_fng" if use_fng else "_nofng"
-    file_path = f"data/predictions/{crypto_name.lower()}_prediction{suffix}.csv"
+    file_path = f"predictions/{crypto_name.lower()}_prediction{suffix}.csv"
 
     # Prepare data to append
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
