@@ -2,10 +2,25 @@ import os
 import sys
 import joblib
 import pandas as pd
+import csv
+import datetime
 from train_models import load_data, load_fear_greed, create_features
 from tensorflow.keras.models import Sequential, load_model
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
+
+def save_predictions_to_csv(crypto_name, predictions, use_fng):
+    suffix = "_with_fng" if use_fng else "_nofng"
+    file_path = f"data/predictions/{crypto_name.lower()}_prediction{suffix}.csv"
+
+    # Prepare data to append
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    rows = [[timestamp, price] for price in predictions]
+
+    # Append to CSV file
+    with open(file_path, mode="a", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+        writer.writerows(rows)
 
 def run_model(crypto_name, use_fng=True):
     print(f"\nRunning model for {crypto_name} (use_fng={use_fng})")
@@ -59,6 +74,9 @@ def run_model(crypto_name, use_fng=True):
     print(f"Predictions for {crypto_name} (use_fng={use_fng}):")
     for i, price in enumerate(prediction, start=1):
         print(f"Prediction for +{i} hour(s): {price:.2f}")
+
+    # Save predictions to CSV
+    save_predictions_to_csv(crypto_name, prediction, use_fng)
 
 if __name__ == "__main__":
     print("Starting model testing process...")
