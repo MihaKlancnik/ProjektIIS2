@@ -15,6 +15,8 @@ except Exception as e:
     print(f"Checkpoint '{checkpoint_name}' not found. Error: {e}")
     sys.exit(1)
 
+print(checkpoint.config.batch_request)
+
 run_id = f"{checkpoint_name}_run"
 checkpoint_result = checkpoint.run(run_id=run_id)
 

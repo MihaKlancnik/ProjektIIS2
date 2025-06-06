@@ -4,9 +4,16 @@ context = gx.get_context()
 
 # Create a new Datasource
 datasource_name = "crypto_data"
+
+# Delete the datasource if it already exists
+try:
+    context.delete_datasource(datasource_name)
+except gx.exceptions.DatasourceNotFoundError:
+    pass  # Datasource doesn't exist, so no need to delete
+
 datasource = context.sources.add_pandas_filesystem(
     name=datasource_name,
-    base_directory=r"data\preprocessed"
+    base_directory=r"../data/preprocessed"
 )
 
 # Define CSV files and corresponding asset names and expectation suites
