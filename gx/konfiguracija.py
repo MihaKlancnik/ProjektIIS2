@@ -89,3 +89,13 @@ for asset_info in assets_info:
 # Build data docs
 site = context.build_data_docs()
 context.open_data_docs()
+
+#v petek ob 9 je zagovor projekta
+#oddaj zip alpa link ce je prevlek
+#na zagovoru pogleda ka si reku na bos nardiu, ka je vn prsl
+# overvie ces pipeline pa kako uprasanje bo dau umes
+#KAKA BOJO UPRASANJA NA USTNEM?
+#RANDOM 3 VPRASANJA, MEU BOS CAS ZA PRIPRAVO
+#POL SE POMENITA PA JE TO TO
+#zajemajo lah vprasanja vse sam nebojo true false
+#zagovori ustni 7 julij
