@@ -57,12 +57,20 @@ jobs:
           ls -R gx/checkpoints/
           ls -R data/preprocessed/
 
+      - name: Pull existing predictions data
+        run: |
+          dvc pull predictions
+
       - name: Run DVC pipeline
         run: |
           dvc repro
           dvc push
           git add dvc.lock
           git commit -m "Update dvc.lock on `date` with GitHub Actions" || true
+
+      - name: Push updated predictions
+        run: |
+          dvc push predictions
 
       - name: Commit pipeline changes
         run: |
