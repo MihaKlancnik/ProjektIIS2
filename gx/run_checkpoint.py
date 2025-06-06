@@ -15,10 +15,15 @@ except Exception as e:
     print(f"Checkpoint '{checkpoint_name}' not found. Error: {e}")
     sys.exit(1)
 
+print("BatchRequest configuration:")
 print(checkpoint.config.batch_request)
 
 run_id = f"{checkpoint_name}_run"
-checkpoint_result = checkpoint.run(run_id=run_id)
+try:
+    checkpoint_result = checkpoint.run(run_id=run_id)
+except Exception as e:
+    print(f"Error during checkpoint run: {e}")
+    sys.exit(1)
 
 context.build_data_docs()
 

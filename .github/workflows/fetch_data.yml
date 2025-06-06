@@ -52,6 +52,11 @@ jobs:
       - name: List preprocessed data
         run: ls -R data/preprocessed/
 
+      - name: Debug Checkpoints and Data
+        run: |
+          ls -R gx/checkpoints/
+          ls -R data/preprocessed/
+
       - name: Run DVC pipeline
         run: |
           dvc repro
