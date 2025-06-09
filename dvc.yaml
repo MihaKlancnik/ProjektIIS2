@@ -28,28 +28,29 @@ stages:
           persist: true
     always_changed: true
 
-  #validate_data:
-  #  cmd: >
-  #    cd gx && poetry run python run_checkpoint.py fear_greed_checkpoint && poetry
-  #    run python run_checkpoint.py solana_checkpoint && poetry run python run_checkpoint.py
-  #    ethereum_checkpoint && poetry run python run_checkpoint.py bitcoin_checkpoint
-  #    && cd ..
-  #  deps:
-  #    - gx/run_checkpoint.py
-  #    - gx/checkpoints/fear_greed_checkpoint.yml
-  #    - gx/checkpoints/solana_checkpoint.yml
-  #    - gx/checkpoints/ethereum_checkpoint.yml
-  #    - gx/checkpoints/bitcoin_checkpoint.yml
-  #    - data/preprocessed/fear_greed/fear_greed_index.csv
-  #    - data/preprocessed/price/solana.csv
-  #    - data/preprocessed/price/ethereum.csv
-  #    - data/preprocessed/price/bitcoin.csv
-  #  outs:
-  #    - gx/uncommitted/data_docs/local_site/validations/fear_greed_suite
-  #    - gx/uncommitted/data_docs/local_site/validations/solana_suite
-  #    - gx/uncommitted/data_docs/local_site/validations/ethereum_suite
-  #    - gx/uncommitted/data_docs/local_site/validations/bitcoin_suite
-  #  always_changed: true
+  validate_data:
+    cmd: >
+      cd gx && poetry run python run_checkpoint.py fear_greed_checkpoint && poetry
+      run python run_checkpoint.py solana_checkpoint && poetry run python run_checkpoint.py
+      ethereum_checkpoint && poetry run python run_checkpoint.py bitcoin_checkpoint
+      && cd ..
+    deps:
+      - gx/run_checkpoint.py
+      - gx/checkpoints/fear_greed_checkpoint.yml
+      - gx/checkpoints/solana_checkpoint.yml
+      - gx/checkpoints/ethereum_checkpoint.yml
+      - gx/checkpoints/bitcoin_checkpoint.yml
+      - data/preprocessed/fear_greed/fear_greed_index.csv
+      - data/preprocessed/price/solana.csv
+      - data/preprocessed/price/ethereum.csv
+      - data/preprocessed/price/bitcoin.csv
+    outs:
+      - gx/uncommitted/data_docs/local_site/validations/fear_greed_suite
+      - gx/uncommitted/data_docs/local_site/validations/solana_suite
+      - gx/uncommitted/data_docs/local_site/validations/ethereum_suite
+      - gx/uncommitted/data_docs/local_site/validations/bitcoin_suite
+    always_changed: true
+
   test_crypto_data:
     cmd: >
       poetry run python src/data/test_data.py
