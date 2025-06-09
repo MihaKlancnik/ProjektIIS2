@@ -21,9 +21,12 @@ def save_predictions_to_csv(crypto_name, predictions, use_fng):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     rows = [[timestamp, price] for price in predictions]
 
-    # Append to CSV file
+    # Check if the file exists and write header if it doesn't
+    file_exists = os.path.exists(file_path)
     with open(file_path, mode="a", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
+        if not file_exists:
+            writer.writerow(["timestamp", "price"])
         writer.writerows(rows)
 
 def run_model(crypto_name, use_fng=True):
