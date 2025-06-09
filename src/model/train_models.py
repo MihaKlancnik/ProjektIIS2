@@ -5,7 +5,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.metrics import mean_squared_error
 from datetime import datetime, timedelta
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Dense, LSTM # Added LSTM
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import MeanSquaredError
 import os
@@ -69,13 +69,24 @@ def load_data(crypto_name):
         # Create a clean dataframe with standard column names
         clean_df = pd.DataFrame()
         clean_df['timestamp'] = pd.to_datetime(df[timestamp_col])
+        # Round timestamp to the nearest hour
+        clean_df['timestamp'] = clean_df['timestamp'].dt.round('h') # Changed 'H' to 'h'
         clean_df['price'] = pd.to_numeric(df[price_col], errors='coerce')
         
         # Sort by timestamp
         clean_df = clean_df.sort_values('timestamp')
         
-        # Handle missing values
-        clean_df['price'] = clean_df['price'].fillna(method='ffill').fillna(method='bfill')
+        # Aggregate data by the rounded hour, taking the mean price for that hour
+        # This helps to avoid issues with duplicate timestamps after rounding if original data was more granular
+        # and ensures a single price point per hour.
+        clean_df = clean_df.groupby('timestamp').agg(
+            price=('price', 'mean'),
+            # Keep other relevant columns if they exist and should be aggregated
+            # For example, if 'volume' was a column: volume=('volume', 'sum')
+        ).reset_index()
+
+        # Handle missing values that might arise from aggregation or were already present
+        clean_df['price'] = clean_df['price'].ffill().bfill() # Changed from fillna(method=...)
         clean_df = clean_df.dropna(subset=['price'])
         
         # Add date column for merging with fear and greed data
@@ -154,7 +165,7 @@ def create_features(df, lookback=24, target_col='price'):
 
 def train_and_save_model(crypto_name, use_fng=False):
     """Train model for cryptocurrency price prediction."""
-    print(f"\nTraining model for {crypto_name}...")
+    print(f"\\nTraining model for {crypto_name}...")
     suffix = '_with_fng' if use_fng else '_nofng'
 
     # Start MLflow run
@@ -206,32 +217,63 @@ def train_and_save_model(crypto_name, use_fng=False):
 
         target_cols = [f'price_next_{i}' for i in range(1, 6)]
 
-        X = df_features[feature_cols]
-        y = df_features[target_cols]
+        X_original = df_features[feature_cols]
+        y_original = df_features[target_cols]
 
         # Check if X or y is empty
-        if X.empty or y.empty:
+        if X_original.empty or y_original.empty:
             print(f"❌ Feature matrix or target matrix is empty for {crypto_name}. Skipping training.")
             return
 
-        # Handle missing values
+        # Handle missing values in features
         imputer = SimpleImputer(strategy='mean')
-        X_imputed = imputer.fit_transform(X) # Use X_imputed after this step
+        X_imputed = imputer.fit_transform(X_original)
 
         # Scale features
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X_imputed) # Use X_scaled after this step
+        feature_scaler = StandardScaler()
+        X_scaled = feature_scaler.fit_transform(X_imputed)
+
+        # Scale target variable y
+        target_scaler = StandardScaler()
+        y_scaled = target_scaler.fit_transform(y_original)
+
+        # Create sequences for LSTM
+        sequence_length = 24  # Number of past timesteps to look at
+        X_list_for_sequences = []
+        y_list_for_sequences = []
+
+        # Number of sequences we can create
+        # Each sequence X uses `sequence_length` from X_scaled.
+        # The corresponding y is taken from y_scaled at the end of that X sequence.
+        num_samples_for_sequences = len(X_scaled) - sequence_length + 1
+
+        if num_samples_for_sequences > 0:
+            for i in range(num_samples_for_sequences):
+                # X sequence is from index i to i + sequence_length - 1
+                X_list_for_sequences.append(X_scaled[i : i + sequence_length])
+                # y target corresponds to the data at index i + sequence_length - 1
+                # This index refers to y_scaled, which has the multi-step ahead targets
+                y_list_for_sequences.append(y_scaled[i + sequence_length - 1])
+        else:
+            print(f"❌ Not enough data to create sequences of length {sequence_length} for {crypto_name}{suffix}. Available X_scaled: {len(X_scaled)}. Skipping training.")
+            # Log a parameter to MLflow indicating why training was skipped for this run.
+            mlflow.log_param("training_status", "skipped_insufficient_data_for_sequences")
+            return
+
+        X_sequenced = np.array(X_list_for_sequences)
+        y_sequenced = np.array(y_list_for_sequences)
+
 
         # Log feature-related parameters
-        mlflow.log_param("feature_count", X_scaled.shape[1])
+        mlflow.log_param("feature_count", X_sequenced.shape[2]) # Features per timestep
+        mlflow.log_param("sequence_length", sequence_length)
         mlflow.log_param("lookback_period", 24) # Assuming 24 from create_features default
 
-        # Define model
+        # Define model (RNN - LSTM based)
         model = Sequential([
-            Dense(128, activation='relu', input_shape=(X_scaled.shape[1],)),
-            Dense(64, activation='relu'),
-            Dense(32, activation='relu'),
-            Dense(len(target_cols))  # Output layer for 5 next prices
+            LSTM(50, activation='relu', input_shape=(X_sequenced.shape[1], X_sequenced.shape[2])), # LSTM layer
+            Dense(25, activation='relu'), # Intermediate Dense layer
+            Dense(y_sequenced.shape[1] if len(y_sequenced.shape) > 1 else 1)  # Output layer, matches number of targets
         ])
 
         # Compile model
@@ -241,13 +283,13 @@ def train_and_save_model(crypto_name, use_fng=False):
         mlflow.log_param("loss_function", "MeanSquaredError")
 
         # Train model
-        epochs = 20
+        epochs = 20 # Keeping epochs relatively low to manage training time
         batch_size = 32
         mlflow.log_param("epochs", epochs)
         mlflow.log_param("batch_size", batch_size)
 
-        print(f"Starting model training for {crypto_name}{suffix}...")
-        history = model.fit(X_scaled, y, epochs=epochs, batch_size=batch_size, verbose=1)
+        print(f"Starting model training for {crypto_name}{suffix} with {X_sequenced.shape[0]} sequences...")
+        history = model.fit(X_sequenced, y_sequenced, epochs=epochs, batch_size=batch_size, verbose=1) # Use X_sequenced, y_sequenced
         print(f"Model training finished for {crypto_name}{suffix}.")
 
         # Log metrics
@@ -261,12 +303,14 @@ def train_and_save_model(crypto_name, use_fng=False):
             os.makedirs(model_dir)
 
         model_path = os.path.join(model_dir, f'{crypto_name}_model{suffix}.h5')
-        scaler_path = os.path.join(model_dir, f'{crypto_name}_scaler{suffix}.pkl')
+        feature_scaler_path = os.path.join(model_dir, f'{crypto_name}_feature_scaler{suffix}.pkl') # Renamed for clarity
+        target_scaler_path = os.path.join(model_dir, f'{crypto_name}_target_scaler{suffix}.pkl') # New target scaler
         imputer_path = os.path.join(model_dir, f'{crypto_name}_imputer{suffix}.pkl')
         features_path = os.path.join(model_dir, f'{crypto_name}_features{suffix}.txt')
 
         model.save(model_path)
-        joblib.dump(scaler, scaler_path)
+        joblib.dump(feature_scaler, feature_scaler_path)
+        joblib.dump(target_scaler, target_scaler_path) # Save the target scaler
         joblib.dump(imputer, imputer_path)
         with open(features_path, 'w') as f:
             for feature in feature_cols:
@@ -275,10 +319,44 @@ def train_and_save_model(crypto_name, use_fng=False):
         print(f"Saved model and artifacts locally for {crypto_name}{suffix}.")
 
         # Log model and artifacts to MLflow
-        mlflow.tensorflow.log_model(model, artifact_path=f"{crypto_name}{suffix}_tf_model")
-        mlflow.sklearn.log_model(scaler, artifact_path=f"{crypto_name}{suffix}_scaler_model")
-        mlflow.sklearn.log_model(imputer, artifact_path=f"{crypto_name}{suffix}_imputer_model")
-        mlflow.log_text("\\n".join(feature_cols), artifact_file=f"{crypto_name}{suffix}_features.txt")
+        # Provide an input example for the Keras model
+        input_example_keras = X_sequenced[:5] if len(X_sequenced) >=5 else X_sequenced # Take a small sample
+        if input_example_keras.shape[0] > 0: # Ensure example is not empty
+            mlflow.tensorflow.log_model(model, artifact_path=f"{crypto_name}{suffix}_tf_model", input_example=input_example_keras)
+        else:
+            print("Warning: Keras input example is empty, not logging model with input example.")
+            mlflow.tensorflow.log_model(model, artifact_path=f"{crypto_name}{suffix}_tf_model")
+
+
+        # Provide an input example for the scikit-learn feature_scaler
+        # Input to feature_scaler is X_imputed
+        input_example_feature_scaler = X_imputed[:5] if len(X_imputed) >= 5 else X_imputed
+        if input_example_feature_scaler.shape[0] > 0:
+             mlflow.sklearn.log_model(feature_scaler, artifact_path=f"{crypto_name}{suffix}_feature_scaler_model", input_example=input_example_feature_scaler)
+        else:
+            print("Warning: Feature scaler input example is empty, not logging with input example.")
+            mlflow.sklearn.log_model(feature_scaler, artifact_path=f"{crypto_name}{suffix}_feature_scaler_model")
+
+        # Provide an input example for the scikit-learn target_scaler
+        # Input to target_scaler is y_original
+        input_example_target_scaler = y_original.iloc[:5].to_numpy() if len(y_original) >= 5 else y_original.to_numpy()
+        if input_example_target_scaler.shape[0] > 0:
+            mlflow.sklearn.log_model(target_scaler, artifact_path=f"{crypto_name}{suffix}_target_scaler_model", input_example=input_example_target_scaler)
+        else:
+            print("Warning: Target scaler input example is empty, not logging with input example.")
+            mlflow.sklearn.log_model(target_scaler, artifact_path=f"{crypto_name}{suffix}_target_scaler_model")
+
+
+        # Provide an input example for the scikit-learn imputer
+        # Input to imputer is X_original
+        input_example_imputer = X_original.iloc[:5].to_numpy() if len(X_original) >=5 else X_original.to_numpy()
+        if input_example_imputer.shape[0] > 0:
+            mlflow.sklearn.log_model(imputer, artifact_path=f"{crypto_name}{suffix}_imputer_model", input_example=input_example_imputer)
+        else:
+            print("Warning: Imputer input example is empty, not logging with input example.")
+            mlflow.sklearn.log_model(imputer, artifact_path=f"{crypto_name}{suffix}_imputer_model")
+
+        mlflow.log_text("\\\\n".join(feature_cols), artifact_file=f"{crypto_name}{suffix}_features.txt")
         print(f"Logged model and artifacts to MLflow for {crypto_name}{suffix}.")
 
     print(f"Finished training and logging for {crypto_name}{suffix}.")

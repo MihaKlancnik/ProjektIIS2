@@ -13,6 +13,8 @@ app = Flask(__name__)
 MODEL_DIR = os.path.join(os.path.dirname(__file__), '../models')
 DATA_DIR = os.path.join(os.path.dirname(__file__), '../data/preprocessed/price')
 
+SEQUENCE_LENGTH = 24 # Define sequence length matching training
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     predictions = {}
@@ -24,17 +26,20 @@ def index():
 
     for crypto_name in cryptos:
         model_path = os.path.join(MODEL_DIR, f'{crypto_name}_model{suffix}.h5')
-        scaler_path = os.path.join(MODEL_DIR, f'{crypto_name}_scaler{suffix}.pkl')
+        # Corrected scaler path to feature_scaler and added target_scaler path
+        feature_scaler_path = os.path.join(MODEL_DIR, f'{crypto_name}_feature_scaler{suffix}.pkl')
+        target_scaler_path = os.path.join(MODEL_DIR, f'{crypto_name}_target_scaler{suffix}.pkl')
         imputer_path = os.path.join(MODEL_DIR, f'{crypto_name}_imputer{suffix}.pkl')
         features_path = os.path.join(MODEL_DIR, f'{crypto_name}_features{suffix}.txt')
 
-        if not all(os.path.exists(p) for p in [model_path, scaler_path, imputer_path, features_path]):
+        if not all(os.path.exists(p) for p in [model_path, feature_scaler_path, target_scaler_path, imputer_path, features_path]):
             predictions[crypto_name] = ['Missing model files']
             continue
 
         # Update the model loading logic to use the new neural network model
         model = load_model(model_path)
-        scaler = joblib.load(scaler_path)
+        feature_scaler = joblib.load(feature_scaler_path) # Load feature_scaler
+        target_scaler = joblib.load(target_scaler_path) # Load target_scaler
         imputer = joblib.load(imputer_path)
 
         with open(features_path, 'r') as f:
@@ -44,18 +49,34 @@ def index():
         df = load_data(crypto_name)
         fng_df = load_fear_greed()
         df = pd.merge(df, fng_df[['date', 'fng_value']], on='date', how='left')
-        df['fng_value'] = df['fng_value'].fillna(method='ffill').fillna(method='bfill').fillna(df['fng_value'].mean())
+        # Updated fillna to use .ffill().bfill()
+        df['fng_value'] = df['fng_value'].ffill().bfill().fillna(df['fng_value'].mean())
         df_features = create_features(df)
 
-        # Use only the latest row of features
-        latest_row = df_features.iloc[-1:]
-        X = latest_row[feature_cols]
-        X_imputed = imputer.transform(X)
-        X_scaled = scaler.transform(X_imputed)
+        # Add check for sufficient data for a sequence
+        if len(df_features) < SEQUENCE_LENGTH:
+            predictions[crypto_name] = [f'Not enough data to form a sequence of {SEQUENCE_LENGTH}']
+            graphs[crypto_name] = None # Or a placeholder image/message
+            comparison_graphs[crypto_name] = None
+            continue
+
+        # Prepare input sequence
+        # Select the last SEQUENCE_LENGTH rows for the input sequence
+        input_df_for_sequence = df_features[feature_cols].iloc[-SEQUENCE_LENGTH:]
+
+
+        X_imputed = imputer.transform(input_df_for_sequence)
+        X_scaled = feature_scaler.transform(X_imputed) # Shape: (SEQUENCE_LENGTH, num_features)
+
+        # Reshape for LSTM: (1, SEQUENCE_LENGTH, num_features)
+        X_reshaped = X_scaled.reshape(1, SEQUENCE_LENGTH, X_scaled.shape[1])
 
         # Predict
-        prediction = model.predict(X_scaled)
-        predictions[crypto_name] = [f'{float(price):.2f}' for price in prediction.flatten()]
+        scaled_prediction = model.predict(X_reshaped)[0] # Shape: (5,)
+
+        # Inverse transform the predictions
+        final_prediction = target_scaler.inverse_transform(scaled_prediction.reshape(1, -1))[0] # Shape: (5,)
+        predictions[crypto_name] = [f'{float(price):.2f}' for price in final_prediction]
 
         # Load last day's prices
         price_file = os.path.join(DATA_DIR, f'{crypto_name}.csv')
@@ -101,6 +122,10 @@ def index():
 
         price_data = pd.read_csv(price_file)
         price_data['timestamp'] = pd.to_datetime(price_data['timestamp'])
+
+        # Ensure timestamps are in the same format and timezone, and round to the nearest hour
+        prediction_data['timestamp'] = pd.to_datetime(prediction_data['timestamp']).dt.round('h') # Corrected 'H' to 'h'
+        price_data['timestamp'] = pd.to_datetime(price_data['timestamp']).dt.round('h') # Corrected 'H' to 'h'
 
         # Filter actual price data to match prediction timestamps
         merged_data = pd.merge(prediction_data, price_data, on='timestamp', how='inner', suffixes=('_predicted', '_actual'))
