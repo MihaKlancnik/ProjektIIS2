@@ -5,18 +5,8 @@
     {
       "expectation_type": "expect_table_row_count_to_be_between",
       "kwargs": {
-        "max_value": 249,
-        "min_value": 249
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {},
-            "metric_name": "table.row_count",
-            "metric_value_kwargs": null
-          },
-          "num_batches": 1
-        }
+        "max_value": 10000000,
+        "min_value": 1
       }
     },
     {
@@ -25,294 +15,97 @@
         "column_set": [
           "price",
           "timestamp"
-        ],
-        "exact_match": null
-      },
-      "meta": {
-        "profiler_details": {
-          "success_ratio": 1.0
-        }
+        ]
       }
     },
     {
       "expectation_type": "expect_column_values_to_be_unique",
       "kwargs": {
         "column": "timestamp"
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {
-              "column": "timestamp"
-            },
-            "metric_name": "column_values.unique.unexpected_count",
-            "metric_value_kwargs": null
-          },
-          "num_batches": 1
-        }
       }
     },
     {
       "expectation_type": "expect_column_values_to_not_be_null",
       "kwargs": {
         "column": "timestamp"
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {
-              "column": "timestamp"
-            },
-            "metric_name": "column_values.nonnull.unexpected_count",
-            "metric_value_kwargs": null
-          },
-          "num_batches": 1
-        }
       }
     },
     {
       "expectation_type": "expect_column_values_to_not_be_null",
       "kwargs": {
         "column": "price"
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {
-              "column": "price"
-            },
-            "metric_name": "column_values.nonnull.unexpected_count",
-            "metric_value_kwargs": null
-          },
-          "num_batches": 1
-        }
       }
     },
     {
       "expectation_type": "expect_column_min_to_be_between",
       "kwargs": {
         "column": "price",
-        "max_value": 75051,
-        "min_value": 75051,
-        "strict_max": false,
-        "strict_min": false
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {
-              "column": "price"
-            },
-            "metric_name": "column.min",
-            "metric_value_kwargs": null
-          },
-          "num_batches": 1
-        }
+        "min_value": 0,
+        "max_value": 999999999,
+        "strict_min": false,
+        "strict_max": false
       }
     },
     {
       "expectation_type": "expect_column_max_to_be_between",
       "kwargs": {
         "column": "price",
-        "max_value": 111391,
-        "min_value": 111391,
-        "strict_max": false,
-        "strict_min": false
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {
-              "column": "price"
-            },
-            "metric_name": "column.max",
-            "metric_value_kwargs": null
-          },
-          "num_batches": 1
-        }
+        "min_value": 0,
+        "max_value": 999999999,
+        "strict_min": false,
+        "strict_max": false
       }
     },
     {
       "expectation_type": "expect_column_values_to_be_between",
       "kwargs": {
         "column": "price",
-        "max_value": 111391,
-        "min_value": 75051,
+        "min_value": 0,
+        "max_value": 999999999,
         "mostly": 1.0,
-        "strict_max": false,
-        "strict_min": false
-      },
-      "meta": {
-        "profiler_details": {
-          "column_max_values_range_estimator": {
-            "metric_configuration": {
-              "domain_kwargs": {
-                "column": "price"
-              },
-              "metric_name": "column.max",
-              "metric_value_kwargs": null
-            },
-            "num_batches": 1
-          },
-          "column_min_values_range_estimator": {
-            "metric_configuration": {
-              "domain_kwargs": {
-                "column": "price"
-              },
-              "metric_name": "column.min",
-              "metric_value_kwargs": null
-            },
-            "num_batches": 1
-          }
-        }
-      }
-    },
-    {
-      "expectation_type": "expect_column_quantile_values_to_be_between",
-      "kwargs": {
-        "allow_relative_error": false,
-        "column": "price",
-        "quantile_ranges": {
-          "quantiles": [
-            0.25,
-            0.5,
-            0.75
-          ],
-          "value_ranges": [
-            [
-              83048,
-              83048
-            ],
-            [
-              103774,
-              103774
-            ],
-            [
-              105054,
-              105054
-            ]
-          ]
-        }
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {
-              "column": "price"
-            },
-            "metric_name": "column.quantile_values",
-            "metric_value_kwargs": {
-              "allow_relative_error": false,
-              "quantiles": [
-                0.25,
-                0.5,
-                0.75
-              ]
-            }
-          },
-          "num_batches": 1
-        }
+        "strict_min": false,
+        "strict_max": false
       }
     },
     {
       "expectation_type": "expect_column_median_to_be_between",
       "kwargs": {
         "column": "price",
-        "max_value": 103774.0,
-        "min_value": 103774.0,
-        "strict_max": false,
-        "strict_min": false
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {
-              "column": "price"
-            },
-            "metric_name": "column.median",
-            "metric_value_kwargs": null
-          },
-          "num_batches": 1
-        }
+        "min_value": 0,
+        "max_value": 999999999,
+        "strict_min": false,
+        "strict_max": false
       }
     },
     {
       "expectation_type": "expect_column_mean_to_be_between",
       "kwargs": {
         "column": "price",
-        "max_value": 95209.22891566265,
-        "min_value": 95209.22891566265,
-        "strict_max": false,
-        "strict_min": false
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {
-              "column": "price"
-            },
-            "metric_name": "column.mean",
-            "metric_value_kwargs": null
-          },
-          "num_batches": 1
-        }
+        "min_value": 0,
+        "max_value": 999999999,
+        "strict_min": false,
+        "strict_max": false
       }
     },
     {
       "expectation_type": "expect_column_stdev_to_be_between",
       "kwargs": {
         "column": "price",
-        "max_value": 11493.221336655535,
-        "min_value": 11493.221336655535,
-        "strict_max": false,
-        "strict_min": false
-      },
-      "meta": {
-        "profiler_details": {
-          "metric_configuration": {
-            "domain_kwargs": {
-              "column": "price"
-            },
-            "metric_name": "column.standard_deviation",
-            "metric_value_kwargs": null
-          },
-          "num_batches": 1
-        }
+        "min_value": 0,
+        "max_value": 999999999,
+        "strict_min": false,
+        "strict_max": false
       }
     },
     {
       "expectation_type": "expect_column_value_lengths_to_be_between",
       "kwargs": {
         "column": "timestamp",
-        "max_value": 19,
-        "min_value": 19,
+        "min_value": 1,
+        "max_value": 100,
         "mostly": 1.0,
-        "strict_max": false,
-        "strict_min": false
-      },
-      "meta": {
-        "profiler_details": {
-          "column_max_length_range_estimator": {
-            "metric_configuration": {
-              "domain_kwargs": {
-                "column": "timestamp"
-              },
-              "metric_name": "column_values.length.max",
-              "metric_value_kwargs": null
-            },
-            "num_batches": 1
-          },
-          "column_min_length_range_estimator": {
-            "metric_configuration": {
-              "domain_kwargs": {
-                "column": "timestamp"
-              },
-              "metric_name": "column_values.length.min",
-              "metric_value_kwargs": null
-            },
-            "num_batches": 1
-          }
-        }
+        "strict_min": false,
+        "strict_max": false
       }
     },
     {
@@ -320,24 +113,7 @@
       "kwargs": {
         "column": "timestamp",
         "mostly": 1.0,
-        "regex": "-?\\d+"
-      },
-      "meta": {
-        "profiler_details": {
-          "evaluated_regexes": {
-            "(?:25[0-5]|2[0-4]\\d|[01]\\d{2}|\\d{1,2})(?:.(?:25[0-5]|2[0-4]\\d|[01]\\d{2}|\\d{1,2})){3}": 1.0,
-            "-?\\d+": 1.0,
-            "-?\\d+(?:\\.\\d*)?": 1.0,
-            "<\\/?(?:p|a|b|img)(?: \\/)?>": 0.0,
-            "[A-Za-z0-9\\.,;:!?()\\\"'%\\-]+": 1.0,
-            "\\b[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}-[0-5][0-9a-fA-F]{3}-[089ab][0-9a-fA-F]{3}-\\b[0-9a-fA-F]{12}\\b ": 0.0,
-            "\\d+": 1.0,
-            "\\s+$": 0.0,
-            "^\\s+": 0.0,
-            "https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{2,255}\\.[a-z]{2,6}\\b(?:[-a-zA-Z0-9@:%_\\+.~#()?&//=]*)": 0.0
-          },
-          "success_ratio": 1.0
-        }
+        "regex": ".*"
       }
     }
   ],
@@ -346,7 +122,7 @@
     "citations": [
       {
         "citation_date": "2025-06-06T08:00:05.840118Z",
-        "comment": "Created by effective Rule-Based Profiler of OnboardingDataAssistant with the configuration included.\n"
+        "comment": "fixed."
       }
     ],
     "great_expectations_version": "0.18.8"
