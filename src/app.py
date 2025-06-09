@@ -142,6 +142,14 @@ def index():
         plt.figure(figsize=(10, 5))
         plt.plot(merged_data['timestamp'], merged_data['price_actual'], marker='o', label='Actual Prices', color='blue')
         plt.plot(merged_data['timestamp'], merged_data['price_predicted'], marker='o', label='Predicted Prices', color='red')
+        
+        
+        if not merged_data.empty:
+            min_val = min(merged_data['price_actual'].min(), merged_data['price_predicted'].min())
+            max_val = max(merged_data['price_actual'].max(), merged_data['price_predicted'].max())
+            padding = (max_val - min_val) * 0.1 # 10% padding
+            plt.ylim(min_val - padding, max_val + padding)
+            
         plt.title(f'{crypto_name.capitalize()} Actual vs Predicted Prices')
         plt.xlabel('Timestamp')
         plt.ylabel('Price')
