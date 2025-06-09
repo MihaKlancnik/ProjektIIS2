@@ -19,7 +19,7 @@ def save_predictions_to_csv(crypto_name, predictions, use_fng):
 
     # Prepare data to append
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    rows = [[timestamp, price] for price in predictions]
+    rows = [[timestamp, predictions[0]]] # Save only the first prediction
 
     # Check if the file exists and write header if it doesn't
     file_exists = os.path.exists(file_path)
