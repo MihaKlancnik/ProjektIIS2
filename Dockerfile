@@ -66,7 +66,7 @@ CMD ["python", "wsgi.py"]
 #rebuild:
 #docker build -t crypto-prediction:latest .
 
-#docker pull ghcr.io/your-username/projektiis2:latest
+#docker pull ghcr.io/mihaklancnik/projektiis2:latest
 #docker tag ghcr.io/your-username/projektiis2:latest crypto-prediction:latest
 
 #REBUILD
