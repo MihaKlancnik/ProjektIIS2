@@ -26,7 +26,6 @@ def index():
 
     for crypto_name in cryptos:
         model_path = os.path.join(MODEL_DIR, f'{crypto_name}_model{suffix}.h5')
-        # Corrected scaler path to feature_scaler and added target_scaler path
         feature_scaler_path = os.path.join(MODEL_DIR, f'{crypto_name}_feature_scaler{suffix}.pkl')
         target_scaler_path = os.path.join(MODEL_DIR, f'{crypto_name}_target_scaler{suffix}.pkl')
         imputer_path = os.path.join(MODEL_DIR, f'{crypto_name}_imputer{suffix}.pkl')
@@ -36,76 +35,77 @@ def index():
             predictions[crypto_name] = ['Missing model files']
             continue
 
-        # Update the model loading logic to use the new neural network model
         model = load_model(model_path)
-        feature_scaler = joblib.load(feature_scaler_path) # Load feature_scaler
-        target_scaler = joblib.load(target_scaler_path) # Load target_scaler
+        feature_scaler = joblib.load(feature_scaler_path)
+        target_scaler = joblib.load(target_scaler_path)
         imputer = joblib.load(imputer_path)
 
         with open(features_path, 'r') as f:
             feature_cols = f.read().splitlines()
 
-        # Load data and create features
         df = load_data(crypto_name)
         fng_df = load_fear_greed()
         df = pd.merge(df, fng_df[['date', 'fng_value']], on='date', how='left')
-        # Updated fillna to use .ffill().bfill()
         df['fng_value'] = df['fng_value'].ffill().bfill().fillna(df['fng_value'].mean())
         df_features = create_features(df)
 
-        # Add check for sufficient data for a sequence
         if len(df_features) < SEQUENCE_LENGTH:
             predictions[crypto_name] = [f'Not enough data to form a sequence of {SEQUENCE_LENGTH}']
-            graphs[crypto_name] = None # Or a placeholder image/message
+            graphs[crypto_name] = None
             comparison_graphs[crypto_name] = None
             continue
 
-        # Prepare input sequence
-        # Select the last SEQUENCE_LENGTH rows for the input sequence
         input_df_for_sequence = df_features[feature_cols].iloc[-SEQUENCE_LENGTH:]
 
-
         X_imputed = imputer.transform(input_df_for_sequence)
-        X_scaled = feature_scaler.transform(X_imputed) # Shape: (SEQUENCE_LENGTH, num_features)
-
-        # Reshape for LSTM: (1, SEQUENCE_LENGTH, num_features)
+        X_scaled = feature_scaler.transform(X_imputed)
         X_reshaped = X_scaled.reshape(1, SEQUENCE_LENGTH, X_scaled.shape[1])
 
-        # Predict
-        scaled_prediction = model.predict(X_reshaped)[0] # Shape: (5,)
+        scaled_prediction = model.predict(X_reshaped)[0]
 
-        # Inverse transform the predictions
-        final_prediction = target_scaler.inverse_transform(scaled_prediction.reshape(1, -1))[0] # Shape: (5,)
+        final_prediction = target_scaler.inverse_transform(scaled_prediction.reshape(1, -1))[0]
         predictions[crypto_name] = [f'{float(price):.2f}' for price in final_prediction]
 
-        # Load last day's prices
+        # ---- NEW: Prepare X-axis timestamps for Price Trend Analysis ----
         price_file = os.path.join(DATA_DIR, f'{crypto_name}.csv')
         if os.path.exists(price_file):
             price_data = pd.read_csv(price_file)
-            last_day_prices = price_data.tail(24)['price'].tolist()
+            price_data['timestamp'] = pd.to_datetime(price_data['timestamp'])
+            last_19_hours_data = price_data.sort_values('timestamp').tail(19)
+            last_day_prices = last_19_hours_data['price'].tolist()
+            last_day_timestamps = last_19_hours_data['timestamp'].tolist()
         else:
             last_day_prices = []
+            last_day_timestamps = []
 
-        combined_prices = last_day_prices + [float(p) for p in predictions[crypto_name]]
+        # Create future timestamps (assuming hourly steps)
+        if last_day_timestamps:
+            last_timestamp = last_day_timestamps[-1]
+        else:
+            last_timestamp = pd.Timestamp.now()
+
+        future_timestamps = [last_timestamp + pd.Timedelta(hours=i) for i in range(1, 6)]
 
         # Create graph
         plt.figure(figsize=(10, 5))
-        plt.plot(range(len(last_day_prices)), last_day_prices, marker='o', label='Last Day Prices', color='blue')
-        plt.plot(range(len(last_day_prices), len(combined_prices)), combined_prices[len(last_day_prices):], marker='o', label='Predicted Prices', color='red')
+        plt.plot(last_day_timestamps, last_day_prices, marker='o', label='Last 19 Hours Prices', color='blue')
+        plt.plot(future_timestamps, [float(p) for p in predictions[crypto_name]], marker='o', label='Next 5 Hours Predictions', color='red')
+
         plt.title(f'{crypto_name.capitalize()} Prices and Predictions')
-        plt.xlabel('Time (Hours)')
+        plt.xlabel('Time (Hourly)')
         plt.ylabel('Price')
+        plt.xticks(rotation=45)
         plt.legend()
         plt.grid(True)
 
         # Save graph to base64
         buf = BytesIO()
-        plt.savefig(buf, format='png')
+        plt.savefig(buf, format='png', bbox_inches='tight')
         buf.seek(0)
         graphs[crypto_name] = base64.b64encode(buf.getvalue()).decode('utf-8')
         buf.close()
 
-        # Load prediction data
+        # ---- Actual vs Predicted Comparison Graph ----
         prediction_file = os.path.join(os.path.dirname(__file__), f'../predictions/{crypto_name}_prediction{suffix}.csv')
         if not os.path.exists(prediction_file):
             comparison_graphs[crypto_name] = None
@@ -114,7 +114,6 @@ def index():
         prediction_data = pd.read_csv(prediction_file)
         prediction_data['timestamp'] = pd.to_datetime(prediction_data['timestamp'])
 
-        # Load actual price data
         price_file = os.path.join(DATA_DIR, f'{crypto_name}.csv')
         if not os.path.exists(price_file):
             comparison_graphs[crypto_name] = None
@@ -123,42 +122,35 @@ def index():
         price_data = pd.read_csv(price_file)
         price_data['timestamp'] = pd.to_datetime(price_data['timestamp'])
 
-        # Ensure timestamps are in the same format and timezone, and round to the nearest hour
-        prediction_data['timestamp'] = pd.to_datetime(prediction_data['timestamp']).dt.round('h') # Corrected 'H' to 'h'
-        price_data['timestamp'] = pd.to_datetime(price_data['timestamp']).dt.round('h') # Corrected 'H' to 'h'
+        prediction_data['timestamp'] = pd.to_datetime(prediction_data['timestamp']).dt.round('h')
+        price_data['timestamp'] = pd.to_datetime(price_data['timestamp']).dt.round('h')
 
-        # Filter actual price data to match prediction timestamps
         merged_data = pd.merge(prediction_data, price_data, on='timestamp', how='inner', suffixes=('_predicted', '_actual'))
 
-        # Filter data for the last two days
         two_days_ago = pd.Timestamp.now() - pd.Timedelta(days=2)
         prediction_data = prediction_data[prediction_data['timestamp'] >= two_days_ago]
         price_data = price_data[price_data['timestamp'] >= two_days_ago]
 
-        # Merge filtered data
         merged_data = pd.merge(prediction_data, price_data, on='timestamp', how='inner', suffixes=('_predicted', '_actual'))
 
-        # Create comparison graph
         plt.figure(figsize=(10, 5))
         plt.plot(merged_data['timestamp'], merged_data['price_actual'], marker='o', label='Actual Prices', color='blue')
         plt.plot(merged_data['timestamp'], merged_data['price_predicted'], marker='o', label='Predicted Prices', color='red')
-        
-        
+
         if not merged_data.empty:
             min_val = min(merged_data['price_actual'].min(), merged_data['price_predicted'].min())
             max_val = max(merged_data['price_actual'].max(), merged_data['price_predicted'].max())
-            padding = (max_val - min_val) * 0.1 # 10% padding
+            padding = (max_val - min_val) * 0.1
             plt.ylim(min_val - padding, max_val + padding)
-            
+
         plt.title(f'{crypto_name.capitalize()} Actual vs Predicted Prices')
         plt.xlabel('Timestamp')
         plt.ylabel('Price')
         plt.legend()
         plt.grid(True)
 
-        # Save graph to base64
         buf = BytesIO()
-        plt.savefig(buf, format='png')
+        plt.savefig(buf, format='png', bbox_inches='tight')
         buf.seek(0)
         comparison_graphs[crypto_name] = base64.b64encode(buf.getvalue()).decode('utf-8')
         buf.close()
