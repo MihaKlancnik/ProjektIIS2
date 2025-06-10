@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  crypto-predictor:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - MLFLOW_TRACKING_USERNAME=${MLFLOW_TRACKING_USERNAME}
+      - MLFLOW_TRACKING_PASSWORD=${MLFLOW_TRACKING_PASSWORD}
+      - DAGSHUB_USER=${DAGSHUB_USER}
+      - DAGSHUB_REPO=${DAGSHUB_REPO}
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./predictions:/app/predictions
+      - ./reports:/app/reports
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Add nginx reverse proxy for production
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro # For SSL certificates
+    depends_on:
+      - crypto-predictor
+    restart: unless-stopped
+    profiles:
+      - production
+
+networks:
+  default:
+    name: crypto-predictor-network

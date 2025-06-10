@@ -173,5 +173,73 @@ def get_report(report_name):
 def get_validation(validation_suite):
     return send_file(f'gx/uncommitted/data_docs/local_site/validations/{validation_suite}')
 
+@app.route('/health')
+def health_check():
+    """Health check endpoint for monitoring and load balancers."""
+    try:
+        # Check if essential directories exist
+        essential_dirs = ['models', 'data/preprocessed/price', 'predictions']
+        missing_dirs = []
+        
+        for dir_path in essential_dirs:
+            full_path = os.path.join(os.path.dirname(__file__), '..', dir_path)
+            if not os.path.exists(full_path):
+                missing_dirs.append(dir_path)
+        
+        # Check if any model files exist
+        model_dir = os.path.join(MODEL_DIR)
+        model_files = []
+        if os.path.exists(model_dir):
+            model_files = [f for f in os.listdir(model_dir) if f.endswith('.h5')]
+        
+        status = {
+            'status': 'healthy' if not missing_dirs and model_files else 'degraded',
+            'timestamp': pd.Timestamp.now().isoformat(),
+            'checks': {
+                'directories': {
+                    'status': 'ok' if not missing_dirs else 'warning',
+                    'missing': missing_dirs
+                },
+                'models': {
+                    'status': 'ok' if model_files else 'warning',
+                    'count': len(model_files)
+                }
+            }
+        }
+        
+        return status, 200 if status['status'] == 'healthy' else 503
+        
+    except Exception as e:
+        return {
+            'status': 'unhealthy',
+            'timestamp': pd.Timestamp.now().isoformat(),
+            'error': str(e)
+        }, 503
+
+@app.route('/metrics')
+def metrics():
+    """Basic metrics endpoint for monitoring."""
+    try:
+        # Get basic application metrics
+        model_dir = os.path.join(MODEL_DIR)
+        model_count = 0
+        if os.path.exists(model_dir):
+            model_count = len([f for f in os.listdir(model_dir) if f.endswith('.h5')])
+        
+        predictions_dir = os.path.join(os.path.dirname(__file__), '..', 'predictions')
+        prediction_files = 0
+        if os.path.exists(predictions_dir):
+            prediction_files = len([f for f in os.listdir(predictions_dir) if f.endswith('.csv')])
+        
+        return {
+            'models_available': model_count,
+            'prediction_files': prediction_files,
+            'supported_cryptos': ['bitcoin', 'ethereum', 'solana'],
+            'timestamp': pd.Timestamp.now().isoformat()
+        }
+        
+    except Exception as e:
+        return {'error': str(e)}, 500
+
 if __name__ == '__main__':
     app.run(debug=True)
