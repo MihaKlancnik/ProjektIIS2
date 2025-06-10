@@ -72,3 +72,26 @@ CMD ["python", "wsgi.py"]
 #REBUILD
 #docker-compose build
 #docker-compose up -d
+
+
+
+#dob nov kontejner dol
+#docker pull ghcr.io/mihaklancnik/projektiis2:latest
+
+#zazen nov kontejner
+#docker-compose up -d
+
+#ugasnes
+#docker-compose down
+
+
+#lokalno:
+#docker-compose up -d
+
+#1. Dockerfile → Builds the container image
+#2. docker-compose.yml → Defines how to run it
+#3. wsgi.py → Starts your Flask app inside
+#4. .dockerignore → Keeps builds clean
+#5. GitHub Actions → Builds automatically when you push code
+#6. Deploy scripts → Easy one-command deployment
+#7. .env.example → Shows you what to configure
