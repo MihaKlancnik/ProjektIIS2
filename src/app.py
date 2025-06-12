@@ -66,7 +66,7 @@ def index():
         final_prediction = target_scaler.inverse_transform(scaled_prediction.reshape(1, -1))[0]
         predictions[crypto_name] = [f'{float(price):.2f}' for price in final_prediction]
 
-        # ---- NEW: Prepare X-axis timestamps for Price Trend Analysis ----
+        # ---- Price Graph ----
         price_file = os.path.join(DATA_DIR, f'{crypto_name}.csv')
         if os.path.exists(price_file):
             price_data = pd.read_csv(price_file)
@@ -78,7 +78,7 @@ def index():
             last_day_prices = []
             last_day_timestamps = []
 
-        # Create future timestamps (assuming hourly steps)
+        
         if last_day_timestamps:
             last_timestamp = last_day_timestamps[-1]
         else:
@@ -86,7 +86,6 @@ def index():
 
         future_timestamps = [last_timestamp + pd.Timedelta(hours=i) for i in range(1, 6)]
 
-        # Create graph
         plt.figure(figsize=(10, 5))
         plt.plot(last_day_timestamps, last_day_prices, marker='o', label='Last 19 Hours Prices', color='blue')
         plt.plot(future_timestamps, [float(p) for p in predictions[crypto_name]], marker='o', label='Next 5 Hours Predictions', color='red')
@@ -98,14 +97,13 @@ def index():
         plt.legend()
         plt.grid(True)
 
-        # Save graph to base64
         buf = BytesIO()
         plt.savefig(buf, format='png', bbox_inches='tight')
         buf.seek(0)
         graphs[crypto_name] = base64.b64encode(buf.getvalue()).decode('utf-8')
         buf.close()
 
-        # ---- Actual vs Predicted Comparison Graph ----
+        # Actual vs Predicted 
         prediction_file = os.path.join(os.path.dirname(__file__), f'../predictions/{crypto_name}_prediction{suffix}.csv')
         if not os.path.exists(prediction_file):
             comparison_graphs[crypto_name] = None
@@ -169,7 +167,6 @@ def get_validation(validation_suite):
 def health_check():
     """Health check endpoint for monitoring and load balancers."""
     try:
-        # Check if essential directories exist
         essential_dirs = ['models', 'data/preprocessed/price', 'predictions']
         missing_dirs = []
         
@@ -178,7 +175,6 @@ def health_check():
             if not os.path.exists(full_path):
                 missing_dirs.append(dir_path)
         
-        # Check if any model files exist
         model_dir = os.path.join(MODEL_DIR)
         model_files = []
         if os.path.exists(model_dir):
@@ -212,7 +208,6 @@ def health_check():
 def metrics():
     """Basic metrics endpoint for monitoring."""
     try:
-        # Get basic application metrics
         model_dir = os.path.join(MODEL_DIR)
         model_count = 0
         if os.path.exists(model_dir):

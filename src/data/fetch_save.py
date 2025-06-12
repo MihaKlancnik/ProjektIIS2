@@ -31,7 +31,6 @@ def save_raw_json(data, raw_dir, raw_filename):
         json.dump(data, file, indent=4)
 
 def main():
-    # Load parameters from YAML
     params = yaml.safe_load(open("params.yaml"))
     url = params["fetch"]["url"]
     cryptos = params["preprocess"]["cryptocurrencies"]

@@ -40,7 +40,7 @@ def write_to_csv(data_list, output_dir, filename):
     if file_exists:
         with open(filepath, mode='r', newline='') as file:
             reader = csv.reader(file)
-            next(reader, None)  # skip header
+            next(reader, None)
             for row in reader:
                 if row and row[0] != "date":
                     existing_dates.add(row[0])
@@ -67,21 +67,18 @@ def write_to_csv(data_list, output_dir, filename):
     print(f"Latest date added: {new_data[-1]['date']}")
 
 def main():
-    # Load params
     params = yaml.safe_load(open("params.yaml"))
 
     output_dir = params["preprocess"]["fear_greed_output_dir"]
     fear_greed_url = params["fetch"]["fear_greed_url"]
     fear_greed_csv = params["preprocess"]["fear_greed_output_filename"]
 
-    # Fetch and save raw JSON
     raw_json = fetch_fear_greed_index(fear_greed_url)
     raw_output_path = os.path.join("data", "raw", "fear_greed_raw.json")
     os.makedirs(os.path.dirname(raw_output_path), exist_ok=True)
     with open(raw_output_path, "w") as f:
         json.dump(raw_json, f, indent=2)
 
-    # Parse and write processed data
     if raw_json:
         parsed_data = parse_json_data(raw_json)
         write_to_csv(parsed_data, output_dir, fear_greed_csv)
