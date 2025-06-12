@@ -23,7 +23,6 @@ else:
 def load_data(crypto_name):
     """Load cryptocurrency price data."""
     try:
-        # Use only the specified file paths for each crypto
         crypto_paths = {
             'bitcoin': 'data/preprocessed/price/bitcoin.csv',
             'ethereum': 'data/preprocessed/price/ethereum.csv',
@@ -40,7 +39,7 @@ def load_data(crypto_name):
         else:
             raise FileNotFoundError(f"Could not find price data for {crypto_name} at the specified path: {path}")
         
-        # Identify timestamp column
+
         timestamp_col = None
         for col in df.columns:
             if 'timestamp' in col.lower() or 'date' in col.lower():
@@ -48,10 +47,10 @@ def load_data(crypto_name):
                 break
         
         if timestamp_col is None and len(df.columns) >= 2:
-            # Assume first column is timestamp
+
             timestamp_col = df.columns[0]
         
-        # Identify price column
+
         price_col = None
         for col in df.columns:
             if 'price' in col.lower():
@@ -59,41 +58,35 @@ def load_data(crypto_name):
                 break
         
         if price_col is None and len(df.columns) >= 2:
-            # Assume second column is price if we have timestamp as first
+
             if timestamp_col == df.columns[0]:
                 price_col = df.columns[1]
             else:
-                # Otherwise assume first column is price
                 price_col = df.columns[0]
         
-        # Create a clean dataframe with standard column names
+
         clean_df = pd.DataFrame()
         clean_df['timestamp'] = pd.to_datetime(df[timestamp_col])
-        # Round timestamp to the nearest hour
-        clean_df['timestamp'] = clean_df['timestamp'].dt.round('h') # Changed 'H' to 'h'
+
+        clean_df['timestamp'] = clean_df['timestamp'].dt.round('h')
         clean_df['price'] = pd.to_numeric(df[price_col], errors='coerce')
         
-        # Sort by timestamp
+
         clean_df = clean_df.sort_values('timestamp')
         
-        # Aggregate data by the rounded hour, taking the mean price for that hour
-        # This helps to avoid issues with duplicate timestamps after rounding if original data was more granular
-        # and ensures a single price point per hour.
         clean_df = clean_df.groupby('timestamp').agg(
             price=('price', 'mean'),
-            # Keep other relevant columns if they exist and should be aggregated
-            # For example, if 'volume' was a column: volume=('volume', 'sum')
+
         ).reset_index()
 
-        # Handle missing values that might arise from aggregation or were already present
-        clean_df['price'] = clean_df['price'].ffill().bfill() # Changed from fillna(method=...)
+        clean_df['price'] = clean_df['price'].ffill().bfill() 
         clean_df = clean_df.dropna(subset=['price'])
         
-        # Add date column for merging with fear and greed data
+
         clean_df['date'] = clean_df['timestamp'].dt.date
         clean_df['date'] = pd.to_datetime(clean_df['date'])
         
-        # Add basic features
+
         clean_df['hour'] = clean_df['timestamp'].dt.hour
         clean_df['day_of_week'] = clean_df['timestamp'].dt.dayofweek
         
@@ -106,7 +99,7 @@ def load_data(crypto_name):
 def load_fear_greed():
     """Load fear and greed index data."""
     try:
-        # Use only the specified file path
+
         path = "data/preprocessed/fear_greed/fear_greed_index.csv"
         if os.path.exists(path):
             print(f"Loading fear and greed data from {path}")
@@ -122,7 +115,6 @@ def load_fear_greed():
             raise ValueError("Required columns not found in Fear and Greed data.")
 
         clean_df = pd.DataFrame()
-        # Convert date format to match price data
         clean_df['date'] = pd.to_datetime(df[date_col], format='%d-%m-%Y', errors='coerce')
         clean_df['fng_value'] = pd.to_numeric(df[value_col], errors='coerce')
 
@@ -133,32 +125,28 @@ def load_fear_greed():
 
     except Exception as e:
         print(f"Error loading Fear and Greed data: {e}")
-        # Return empty DataFrame with required columns
+
         return pd.DataFrame(columns=['date', 'fng_value'])
 
 def create_features(df, lookback=24, target_col='price'):
     """Create features for price prediction model."""
-    # Ensure there are enough rows for feature creation
-    min_rows_required = lookback + 12 + 5  # Lookback + rolling window + target shifts
+
+    min_rows_required = lookback + 12 + 5  
     if len(df) < min_rows_required:
-        print(f"❌ Not enough rows for feature creation. Required: {min_rows_required}, Available: {len(df)}")
+        print(f"Not enough rows for feature creation. Required: {min_rows_required}, Available: {len(df)}")
         return pd.DataFrame()
 
     df_features = df.copy()
 
-    # Create lagged features
     for i in range(1, lookback + 1):
         df_features[f'price_lag_{i}'] = df_features[target_col].shift(i)
 
-    # Create rolling window features
     df_features['price_rolling_mean_24'] = df_features[target_col].rolling(window=24).mean()
     df_features['price_rolling_std_24'] = df_features[target_col].rolling(window=24).std()
 
-    # Create target variables for next 5 hours
     for i in range(1, 6):
         df_features[f'price_next_{i}'] = df_features[target_col].shift(-i)
 
-    # Drop rows with NaN values
     df_features = df_features.dropna()
 
     return df_features
@@ -168,18 +156,17 @@ def train_and_save_model(crypto_name, use_fng=False):
     print(f"\\nTraining model for {crypto_name}...")
     suffix = '_with_fng' if use_fng else '_nofng'
 
-    # Start MLflow run
     with mlflow.start_run(run_name=f"train_{crypto_name}{suffix}") as run:
         run_id = run.info.run_id
         print(f"MLflow Run ID: {run_id} for {crypto_name}{suffix}")
         mlflow.log_param("crypto_name", crypto_name)
         mlflow.log_param("use_fng", use_fng)
 
-        # Load price data
+
         df = load_data(crypto_name)
         print(f"Data shape after loading: {df.shape}")
 
-        # Add fear and greed index if specified
+
         if use_fng:
             print("Including fear and greed index in model...")
             fng_df = load_fear_greed()
