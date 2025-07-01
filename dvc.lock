@@ -37,28 +37,28 @@ stages:
     outs:
     - path: data/preprocessed/price
       hash: md5
-      md5: 4a1b6140daab7cf40592298fb9d812db.dir
-      size: 66331
+      md5: cef07e349f124aacad2e3eb6bd5194d0.dir
+      size: 66416
       nfiles: 3
     - path: data/raw/crypto_prices.json
       hash: md5
-      md5: 82a1d3df860ad10dca301219552bbfd5
-      size: 140
+      md5: 36cdbd1687de518100c0fbe30645b567
+      size: 141
   test_crypto_data:
     cmd: "poetry run python src/data/test_data.py\n"
     deps:
     - path: data/preprocessed/price/bitcoin.csv
       hash: md5
-      md5: f3da2269660973485f9b39b2f3d5d1b8
-      size: 21820
+      md5: 26bb1061a7576c6b421754b74dce0deb
+      size: 21848
     - path: data/preprocessed/price/ethereum.csv
       hash: md5
-      md5: 6b37ff947a01c5fdd36d78786d2ce04e
-      size: 22658
+      md5: 205950c12b1a88fea380f4e7452b064f
+      size: 22687
     - path: data/preprocessed/price/solana.csv
       hash: md5
-      md5: aa9be4903b1b1871f40508230195a9d9
-      size: 21853
+      md5: bfec0a194672c8591ebc491837d74488
+      size: 21881
     - path: src/data/test_data.py
       hash: md5
       md5: 804c015f49f7f81cd02609fecf1202f3
@@ -66,16 +66,16 @@ stages:
     outs:
     - path: reports/bitcoin_data_testing_report.html
       hash: md5
-      md5: d230ade25562a80ffb52ae4812473089
-      size: 3606430
+      md5: f61b2bfb534554fc4efb3b7088504019
+      size: 3606476
     - path: reports/ethereum_data_testing_report.html
       hash: md5
-      md5: 729f6805991d1a817d316b4ed393087a
-      size: 3607038
+      md5: ff88aae78019cc28da6316eac50e8e76
+      size: 3607244
     - path: reports/solana_data_testing_report.html
       hash: md5
-      md5: d8bdeb07165e5552dd5420020347811f
-      size: 3607120
+      md5: 6ceaa3b214ad2918608516d507a5a685
+      size: 3607196
   fetch_fear_greed_data:
     cmd: "poetry run python src/data/fetch_fear_greed.py\n"
     deps:
@@ -110,16 +110,16 @@ stages:
       size: 1116
     - path: data/preprocessed/price/bitcoin.csv
       hash: md5
-      md5: f3da2269660973485f9b39b2f3d5d1b8
-      size: 21820
+      md5: 26bb1061a7576c6b421754b74dce0deb
+      size: 21848
     - path: data/preprocessed/price/ethereum.csv
       hash: md5
-      md5: 6b37ff947a01c5fdd36d78786d2ce04e
-      size: 22658
+      md5: 205950c12b1a88fea380f4e7452b064f
+      size: 22687
     - path: data/preprocessed/price/solana.csv
       hash: md5
-      md5: aa9be4903b1b1871f40508230195a9d9
-      size: 21853
+      md5: bfec0a194672c8591ebc491837d74488
+      size: 21881
     - path: gx/checkpoints/bitcoin_checkpoint.yml
       hash: md5
       md5: b4513022898e9f80b9be2f06c4e82644
@@ -143,23 +143,23 @@ stages:
     outs:
     - path: gx/uncommitted/data_docs/local_site/validations/bitcoin_suite
       hash: md5
-      md5: cfdab20a10167f6242a82e39f98f56f4.dir
-      size: 52346
+      md5: fe064309c249ec42286570ba462cc1c9.dir
+      size: 52349
       nfiles: 1
     - path: gx/uncommitted/data_docs/local_site/validations/ethereum_suite
       hash: md5
-      md5: 9c37ef3d07c8aef8da4811a3db4b0951.dir
-      size: 52356
+      md5: 4ff0c018b612c1340c061c25ddcda261.dir
+      size: 52357
       nfiles: 1
     - path: gx/uncommitted/data_docs/local_site/validations/fear_greed_suite
       hash: md5
-      md5: 5a968053eff3ea068785b2a6008ba9eb.dir
+      md5: 2b645985551ec6d4d1ea1e1eab59ac54.dir
       size: 60482
       nfiles: 1
     - path: gx/uncommitted/data_docs/local_site/validations/solana_suite
       hash: md5
-      md5: 4ab0cc303fdfbe67bce8a08976e2ee37.dir
-      size: 52338
+      md5: 975717523a61c320fe80808e85aee7ca.dir
+      size: 52342
       nfiles: 1
   train_models:
     cmd: "poetry run python src/model/train_models.py\n"
@@ -170,16 +170,16 @@ stages:
       size: 1116
     - path: data/preprocessed/price/bitcoin.csv
       hash: md5
-      md5: f3da2269660973485f9b39b2f3d5d1b8
-      size: 21820
+      md5: 26bb1061a7576c6b421754b74dce0deb
+      size: 21848
     - path: data/preprocessed/price/ethereum.csv
       hash: md5
-      md5: 6b37ff947a01c5fdd36d78786d2ce04e
-      size: 22658
+      md5: 205950c12b1a88fea380f4e7452b064f
+      size: 22687
     - path: data/preprocessed/price/solana.csv
       hash: md5
-      md5: aa9be4903b1b1871f40508230195a9d9
-      size: 21853
+      md5: bfec0a194672c8591ebc491837d74488
+      size: 21881
     - path: src/model/train_models.py
       hash: md5
       md5: cacd823148878195e855e3da58f0da05
@@ -187,7 +187,7 @@ stages:
     outs:
     - path: models/
       hash: md5
-      md5: a497c8eb62c5a2c1398b62ad519de3ee.dir
+      md5: ce4a265ccee34c82257540ff13d6fd2c.dir
       size: 1473246
       nfiles: 30
   save_predictions:
@@ -200,6 +200,6 @@ stages:
     outs:
     - path: predictions
       hash: md5
-      md5: 49a6d4e6fcf39f0c2902b009ee70e48a.dir
-      size: 157215
+      md5: e540b3ad1c9136a00a9566eecc7c8d1f.dir
+      size: 157401
       nfiles: 6
