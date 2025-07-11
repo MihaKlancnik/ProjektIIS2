@@ -7,6 +7,7 @@ from io import BytesIO
 import base64
 from model.train_models import load_data, load_fear_greed, create_features
 from tensorflow.keras.models import Sequential, load_model
+import src.data.cleanup
 
 app = Flask(__name__)
 
@@ -14,6 +15,9 @@ MODEL_DIR = os.path.join(os.path.dirname(__file__), '../models')
 DATA_DIR = os.path.join(os.path.dirname(__file__), '../data/preprocessed/price')
 
 SEQUENCE_LENGTH = 24 # Define sequence length matching training
+
+# Run cleanup before starting the app
+src.data.cleanup.cleanup_data_folder(os.path.join(os.path.dirname(__file__), "../data"), max_age_days=70)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
