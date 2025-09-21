@@ -33,7 +33,9 @@ RUN poetry config virtualenvs.create false \
 COPY . .
 
 # Set Python path to include src directory
-ENV PYTHONPATH="/app/src:$PYTHONPATH"
+# Define a build-time ARG so BuildKit won't warn about an undefined $PYTHONPATH
+ARG PYTHONPATH
+ENV PYTHONPATH="/app/src:${PYTHONPATH}"
 
 # Create necessary directories
 RUN mkdir -p data/preprocessed/price \
