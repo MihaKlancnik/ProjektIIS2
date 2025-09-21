@@ -49,10 +49,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          # Build for a single platform (amd64) to avoid cross-architecture
-          # QEMU failures when pip/Poetry try to install packages that don't
-          # have arm64 wheels (TensorFlow is a common culprit).
-          platforms: linux/amd64
+          # remove or comment out 'platforms' to build for runner arch (avoids QEMU)
+          # platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

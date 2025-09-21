@@ -1,33 +1,29 @@
 # Use Python 3.11 slim image
 FROM python:3.11-slim
 
-# Set working directory
-WORKDIR /app
-
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
+ENV POETRY_VERSION=1.5.1 \
+    POETRY_VIRTUALENVS_CREATE=false \
     POETRY_NO_INTERACTION=1 \
-    POETRY_VENV_IN_PROJECT=1 \
-    POETRY_CACHE_DIR=/tmp/poetry_cache
+    PIP_NO_CACHE_DIR=1 \
+    POETRY_CACHE_DIR=/var/cache/pypoetry
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+# install system build deps commonly required by scientific/crypto packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential gcc g++ make git curl wget \
+    libffi-dev libssl-dev libbz2-dev liblzma-dev libsqlite3-dev \
+    libatlas-base-dev libopenblas-dev pkg-config && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install Poetry
-RUN pip install poetry
+# install poetry
+RUN pip install "poetry==$POETRY_VERSION"
 
-# Copy poetry configuration files and README
-COPY pyproject.toml poetry.lock* README.md ./
+WORKDIR /app
+COPY pyproject.toml poetry.lock* /app/
 
-# Configure poetry and install dependencies
-RUN poetry config virtualenvs.create false \
-    && poetry install --only=main --no-root --no-interaction --no-ansi \
-    && rm -rf /tmp/poetry_cache
+# try a normal install; if it fails, the verbose retry helps debugging
+RUN poetry config virtualenvs.create false && \
+    poetry install --only=main --no-root --no-interaction --no-ansi || \
+    poetry install --only=main --no-root --no-interaction --no-ansi --verbose
 
 # Copy application code
 COPY . .
