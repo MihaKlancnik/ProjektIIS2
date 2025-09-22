@@ -24,6 +24,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -49,44 +52,9 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          # remove or comment out 'platforms' to build for runner arch (avoids QEMU)
-          # platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  # Security scanning commented out due to issues
-  # You can add it back later when needed
-  # security-scan:
-  #   runs-on: ubuntu-latest
-  #   needs: build-and-push
-  #   permissions:
-  #     security-events: write
-  #   steps:
-  #     - name: Run Trivy vulnerability scanner
-  #       uses: aquasecurity/trivy-action@master
-  #       with:
-  #         image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-  #         format: "sarif"
-  #         output: "trivy-results.sarif"
-
-  # Comment out deployment jobs until you have servers configured
-  # deploy-to-staging:
-  #   needs: build-and-push
-  #   runs-on: ubuntu-latest
-  #   if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-  #   environment: staging
-  #   steps:
-  #     - name: Deploy to staging server
-  #       # Configure when you have staging server
-
-  # deploy-to-production:
-  #   needs: [build-and-push]
-  #   runs-on: ubuntu-latest
-  #   if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-  #   environment: production
-  #   steps:
-  #     - name: Deploy to production server
-  #       # Configure when you have production server
