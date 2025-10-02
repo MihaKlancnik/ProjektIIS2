@@ -5,6 +5,7 @@ on:
 
 jobs:
   fetch_data:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     name: Fetch and Pre-process Crypto & Fear/Greed Data
     runs-on: ubuntu-latest
 
